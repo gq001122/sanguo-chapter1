@@ -1148,6 +1148,10 @@
                 // 事件监听
                 setupEventListeners();
                 
+                // 直接跳过剧情，直接显示角色选择
+                document.getElementById('intro-screen').style.display = 'none';
+                document.getElementById('select-screen').style.display = 'flex';
+                
                 // 更新最高分显示
                 document.getElementById('bestScore').textContent = `最高纪录: ${game.bestScore}米`;
                 
