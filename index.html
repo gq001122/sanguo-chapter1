@@ -727,12 +727,17 @@
         
         <!-- 章节完成界面 -->
         <div id="chapter-complete">
-            <h2 class="complete-title">🎉 第一章完成！</h2>
+            <div class="complete-badge">🏆</div>
+            <h2 class="complete-title">第一章完成！</h2>
             <div class="complete-stats">
                 <div class="stat-row"><span>逃亡距离</span><span id="statDistance">0米</span></div>
                 <div class="stat-row"><span>获得金币</span><span id="statCoins">0</span></div>
                 <div class="stat-row"><span>关键选择</span><span id="statChoices">-</span></div>
                 <div class="stat-row"><span>技能使用</span><span id="statSkills">0次</span></div>
+            </div>
+            <div style="color:rgba(255,255,255,0.7);margin-bottom:20px;text-align:center;">
+                <p style="margin:5px 0;">🎭 你选择了保护貂蝉的路线</p>
+                <p class="choice-result" id="choiceDetail"></p>
             </div>
             <button class="start-btn" id="nextChapterBtn">下一章预告</button>
             <button class="start-btn secondary" id="replayBtn" style="margin-top:15px;">重玩本章</button>
@@ -1341,6 +1346,23 @@
                     handleInput(deltaX, deltaY);
                 }
             }, { passive: false });
+            
+            // 添加全局测试函数供云手机调用
+            window.testGame = function(action) {
+                if (!game.running) {
+                    console.log('游戏未运行, running:', game.running);
+                    return false;
+                }
+                switch(action) {
+                    case 'jump': jump(); return true;
+                    case 'slide': slide(); return true;
+                    case 'left': moveLeft(); return true;
+                    case 'right': moveRight(); return true;
+                    case 'skill': useSkill(); return true;
+                    default: return false;
+                }
+            };
+            console.log('游戏初始化完成');
         }
         
         function selectCharacter(charId) {
@@ -1448,8 +1470,23 @@
             
             document.getElementById('statDistance').textContent = `${game.score}米`;
             document.getElementById('statCoins').textContent = `${game.coins}`;
-            document.getElementById('statChoices').textContent = game.choices.length > 0 ? game.choices.join(', ') : '无';
+            
+            // 显示选择结果
+            if (game.choices.length > 0) {
+                document.getElementById('statChoices').textContent = `已做出 ${game.choices.length} 个选择`;
+                document.getElementById('choiceDetail').textContent = game.choices.join(' | ');
+            } else {
+                document.getElementById('statChoices').textContent = '默认路线';
+                document.getElementById('choiceDetail').textContent = '你跟随大部队行动';
+            }
+            
             document.getElementById('statSkills').textContent = `${game.skillUses}次`;
+            
+            // 更新最高分
+            if (game.score > game.bestScore) {
+                game.bestScore = game.score;
+                localStorage.setItem('chapter1_best', game.bestScore);
+            }
         }
         
         function gameOver(isVictory = false) {
