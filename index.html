@@ -335,7 +335,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.95);
+            background: linear-gradient(180deg, #1a0505 0%, #2d1a1a 50%, #1a0505 100%);
             display: none;
             flex-direction: column;
             justify-content: center;
@@ -349,6 +349,12 @@
             color: #FFD700;
             margin-bottom: 20px;
             text-shadow: 0 0 20px rgba(255,215,0,0.5);
+            animation: glow 2s ease-in-out infinite;
+        }
+        
+        @keyframes glow {
+            0%, 100% { text-shadow: 0 0 20px rgba(255,215,0,0.5); }
+            50% { text-shadow: 0 0 40px rgba(255,215,0,0.8), 0 0 60px rgba(255,215,0,0.4); }
         }
         
         .complete-stats {
@@ -357,12 +363,14 @@
             border-radius: 15px;
             margin: 20px 0;
             text-align: center;
+            border: 2px solid rgba(255,215,0,0.3);
+            min-width: 280px;
         }
         
         .stat-row {
             display: flex;
             justify-content: space-between;
-            margin: 10px 0;
+            margin: 12px 0;
             color: #fff;
             font-size: 1.1em;
         }
@@ -370,6 +378,23 @@
         .stat-row span:last-child {
             color: #FFD700;
             font-weight: bold;
+        }
+        
+        .complete-badge {
+            font-size: 4em;
+            margin-bottom: 10px;
+            animation: bounce 1s ease-in-out infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .choice-result {
+            color: rgba(255,255,255,0.6);
+            font-size: 0.85em;
+            margin-top: 5px;
         }
         
         /* HUD */
@@ -559,6 +584,7 @@
             text-align: center;
             text-shadow: 0 0 20px rgba(255,255,255,0.8);
             animation: qteFlash 0.5s ease-in-out infinite;
+            cursor: pointer;
         }
         
         .qte-key {
@@ -568,6 +594,16 @@
             padding: 10px 25px;
             border-radius: 10px;
             font-weight: bold;
+        }
+        
+        .qte-instruction {
+            position: absolute;
+            bottom: 18%;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255,255,255,0.7);
+            font-size: 0.9em;
+            text-align: center;
         }
         
         @keyframes qteFlash {
@@ -742,9 +778,19 @@
             <div class="boss-hint" id="bossHint">
                 <span class="qte-key" id="qteKey">→</span>
             </div>
+            <div class="qte-instruction">点击正确方向或使用方向键</div>
+            <!-- QTE方向按钮 -->
+            <div style="position:absolute;bottom:5%;left:0;right:0;display:flex;justify-content:center;gap:15px;">
+                <button class="qte-dir-btn" data-dir="←" style="background:rgba(255,215,0,0.3);border:2px solid #FFD700;border-radius:15px;padding:15px 25px;font-size:1.5em;color:#fff;cursor:pointer;">←</button>
+                <button class="qte-dir-btn" data-dir="↑" style="background:rgba(255,215,0,0.3);border:2px solid #FFD700;border-radius:15px;padding:15px 25px;font-size:1.5em;color:#fff;cursor:pointer;">↑</button>
+                <button class="qte-dir-btn" data-dir="↓" style="background:rgba(255,215,0,0.3);border:2px solid #FFD700;border-radius:15px;padding:15px 25px;font-size:1.5em;color:#fff;cursor:pointer;">↓</button>
+                <button class="qte-dir-btn" data-dir="→" style="background:rgba(255,215,0,0.3);border:2px solid #FFD700;border-radius:15px;padding:15px 25px;font-size:1.5em;color:#fff;cursor:pointer;">→</button>
+            </div>
             <div class="player-health-bar">
                 <div class="player-health-fill" id="playerHealthFill"></div>
             </div>
+            <!-- 进度指示 -->
+            <div id="bossProgress" style="position:absolute;bottom:45%;left:50%;transform:translateX(-50%);color:#FFD700;font-size:1em;"></div>
         </div>
     </div>
 
@@ -762,25 +808,25 @@
             name: '洛阳惊变',
             duration: 1800, // 约30秒demo时间
             phase1End: 600,  // 上半部分结束距离
-            bossStart: 900, // BOSS战开始距离
+            bossStart: 700, // BOSS战开始距离（降低难度）
             
             // 分叉选择点
             branchPoints: [
-                { distance: 300, text: '左侧走宫女通道', hint: '安全但耗时' },
-                { distance: 700, text: '右侧走太监通道', hint: '危险但快速' }
+                { distance: 250, text: '左侧走宫女通道', hint: '左滑选择 | 安全但耗时' },
+                { distance: 500, text: '右侧走太监通道', hint: '右滑选择 | 危险但快速' }
             ],
             
             // 剧情对话点
             dialogPoints: [
                 { 
-                    distance: 50, 
+                    distance: 30, 
                     speaker: '旁白',
                     text: '东汉末年，董卓专权。今夜，你将见证改变三国格局的惊变...',
                     auto: true,
-                    duration: 3000
+                    duration: 2500
                 },
                 { 
-                    distance: 200,
+                    distance: 150,
                     speaker: '貂蝉',
                     text: '（低声）将军，董卓的人正在搜寻我...我必须离开这里。',
                     choices: [
@@ -878,6 +924,13 @@
             obstacles: [],
             coinItems: [],
             decorations: [],
+            
+            // 障碍物生成控制
+            lastObstacleZ: 0,
+            minObstacleGap: 300, // 最小障碍物间距
+            
+            // 视觉反馈系统
+            effects: [], // 碰撞反馈、金币收集反馈等
             
             // 相机
             cameraOffset: { x: 0, angle: 0 },
@@ -1245,12 +1298,9 @@
             
             // 使用document级别的点击监听器作为最后兜底
             document.addEventListener('click', function(e) {
-                console.log('Document click at:', e.clientX, e.clientY, 'Target:', e.target.id);
-                
                 // intro-screen 界面
                 const introScreen = document.getElementById('intro-screen');
                 if (introScreen && introScreen.style.display !== 'none') {
-                    console.log('intro-screen is visible');
                     showSelectScreen();
                     return;
                 }
@@ -1258,7 +1308,6 @@
                 // select-screen 界面
                 const selectScreen = document.getElementById('select-screen');
                 if (selectScreen && selectScreen.style.display !== 'none') {
-                    console.log('select-screen is visible');
                     startGame();
                     return;
                 }
@@ -1266,7 +1315,6 @@
                 // start-screen 界面
                 const startScreen = document.getElementById('start-screen');
                 if (startScreen && startScreen.style.display !== 'none') {
-                    console.log('start-screen is visible');
                     document.getElementById('start-screen').style.display = 'none';
                     game.phase = 'playing';
                     game.running = true;
@@ -1274,6 +1322,25 @@
                     return;
                 }
             });
+            
+            // document级别的触摸事件处理（兼容云手机）
+            document.addEventListener('touchstart', function(e) {
+                if (!game.running) return;
+                if (e.touches.length > 0) {
+                    touchStartX = e.touches[0].clientX;
+                    touchStartY = e.touches[0].clientY;
+                }
+            }, { passive: false });
+            
+            document.addEventListener('touchend', function(e) {
+                if (!game.running) return;
+                if (e.changedTouches.length > 0) {
+                    const touch = e.changedTouches[0];
+                    const deltaX = touch.clientX - touchStartX;
+                    const deltaY = touch.clientY - touchStartY;
+                    handleInput(deltaX, deltaY);
+                }
+            }, { passive: false });
         }
         
         function selectCharacter(charId) {
@@ -1322,6 +1389,9 @@
             game.obstacles = [];
             game.coinItems = [];
             game.decorations = [];
+            game.effects = [];
+            game.lastObstacleZ = 0;
+            game.screenShake = 0;
             game.branchActive = false;
             game.branchResult = null;
             game.dialogActive = false;
@@ -1329,6 +1399,12 @@
             game.bossActive = false;
             game.boss.hp = 100;
             game.playerHp = game.playerMaxHp;
+            game.qteCorrect = 0;
+            
+            // 重置分叉触发状态
+            CHAPTER1_CONFIG.branchPoints.forEach(b => b.triggered = false);
+            // 重置对话触发状态
+            CHAPTER1_CONFIG.dialogPoints.forEach(d => d.triggered = false);
             
             // 初始化道路
             for (let i = 0; i < 30; i++) {
@@ -1336,6 +1412,7 @@
             }
             
             updateHUD();
+            updatePlayerHealthUI();
             requestAnimationFrame(gameLoop);
         }
         
@@ -1397,37 +1474,28 @@
         }
         
         // ==================== 输入处理 ====================
+        let touchStartX = 0;
+        let touchStartY = 0;
+        
         function handleTouchStart(e) {
             e.preventDefault();
-            const touch = e.touches[0];
-            game.touchStartX = touch.clientX;
-            game.touchStartY = touch.clientY;
+            if (e.touches.length > 0) {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            }
         }
         
         function handleTouchEnd(e) {
             e.preventDefault();
             if (!game.running) return;
             
-            const touch = e.changedTouches[0];
-            const deltaX = touch.clientX - game.touchStartX;
-            const deltaY = touch.clientY - game.touchStartY;
-            
-            // 如果移动距离太小，尝试点击区域判断
-            if (Math.abs(deltaX) < 15 && Math.abs(deltaY) < 15) {
-                // 点击屏幕区域判断
-                const screenHeight = window.innerHeight;
-                const clickY = touch.clientY;
-                const screenWidth = window.innerWidth;
-                const clickX = touch.clientX;
+            if (e.changedTouches.length > 0) {
+                const touch = e.changedTouches[0];
+                const deltaX = touch.clientX - touchStartX;
+                const deltaY = touch.clientY - touchStartY;
                 
-                // 上半部分点击 = 跳跃
-                if (clickY < screenHeight * 0.5) {
-                    jump();
-                    return;
-                }
+                handleInput(deltaX, deltaY);
             }
-            
-            handleInput(deltaX, deltaY);
         }
         
         function handleTouchMove(e) {
@@ -1699,14 +1767,20 @@
                 addRoadSegment();
             }
             
-            // 生成障碍物
-            const obstacleRate = game.score < CHAPTER1_CONFIG.phase1End ? 0.015 : 0.025;
-            if (Math.random() < obstacleRate) {
+            // 生成障碍物 - 优化：难度渐进式增加，间距动态调整
+            const progressRatio = Math.min(game.score / 600, 1); // 0-1表示前600米进度
+            const baseObstacleRate = 0.012 - progressRatio * 0.004; // 从0.012降到0.008
+            const minGap = 250 - progressRatio * 50; // 间距从250降到200
+            
+            if (Math.random() < baseObstacleRate && 
+                game.player.z + 800 - game.lastObstacleZ > minGap) {
                 spawnObstacle();
+                game.lastObstacleZ = game.player.z + 800;
             }
             
-            // 生成金币
-            if (Math.random() < 0.04) {
+            // 生成金币 - 优化：前期更多金币
+            const coinRate = 0.05 + (1 - progressRatio) * 0.02; // 前期0.07，后期0.05
+            if (Math.random() < coinRate) {
                 spawnCoin();
             }
             
@@ -1739,6 +1813,8 @@
             });
             
             // 更新金币
+            const w = game.width;
+            const h = game.height;
             game.coinItems = game.coinItems.filter(coin => {
                 coin.z -= 5 * speedMult;
                 
@@ -1746,6 +1822,14 @@
                     const laneDiff = Math.abs(coin.lane - game.player.lane);
                     if (laneDiff < 0.7) {
                         game.coins += 5;
+                        // 计算金币在屏幕上的位置
+                        const relZ = game.player.z - coin.z;
+                        const scale = 150 / (150 + relZ);
+                        const horizon = h * 0.38;
+                        const playerScreenY = h * 0.78;
+                        const screenY = horizon + (playerScreenY - horizon) * scale;
+                        const screenX = w * 0.5 + (coin.lane - 1) * 50 * scale;
+                        showCoinFeedback(screenX, screenY);
                         updateHUD();
                         return false;
                     }
@@ -1765,12 +1849,64 @@
                 updateSkillUI();
             }
             
+            // 更新视觉效果
+            updateEffects();
+            
             updateHUD();
+        }
+        
+        // 视觉效果系统
+        function updateEffects() {
+            game.effects = game.effects.filter(effect => {
+                effect.life -= 16; // 约60fps
+                effect.y -= effect.speed || 2;
+                effect.alpha = Math.max(0, effect.life / effect.maxLife);
+                return effect.life > 0;
+            });
+        }
+        
+        // 添加视觉效果
+        function addEffect(type, x, y, text = '', color = '#FFD700') {
+            game.effects.push({
+                type: type,
+                x: x,
+                y: y,
+                text: text,
+                color: color,
+                alpha: 1,
+                life: 1000,
+                maxLife: 1000,
+                speed: 2
+            });
+        }
+        
+        // 碰撞反馈
+        function showDamageFeedback() {
+            const w = game.width;
+            const h = game.height;
+            
+            // 屏幕红色闪烁
+            game.effects.push({
+                type: 'screenFlash',
+                color: 'rgba(255,0,0,0.4)',
+                life: 300,
+                maxLife: 300,
+                alpha: 1
+            });
+            
+            // 震动效果
+            game.screenShake = 15;
+        }
+        
+        // 金币收集反馈
+        function showCoinFeedback(x, y) {
+            addEffect('coinText', x, y - 30, '+5', '#FFD700');
         }
         
         function takeDamage() {
             game.playerHp--;
             updatePlayerHealthUI();
+            showDamageFeedback(); // 视觉反馈
             
             // 短暂无敌
             game.player.invincible = true;
@@ -1939,22 +2075,38 @@
             game.boss.hp = 100;
             game.qteCorrect = 0;
             game.qteTotal = 5;
+            game.phase = 'boss';
+            
+            // 暂停主循环
+            game.running = false;
             
             document.getElementById('boss-ui').style.display = 'block';
             document.getElementById('bossHealthFill').style.width = '100%';
             updatePlayerHealthUI();
+            updateBossProgress();
             
-            // 开始QTE序列
-            nextQTE();
+            // 延迟开始QTE，给玩家准备时间
+            setTimeout(() => {
+                if (game.bossActive) {
+                    nextQTE();
+                }
+            }, 1000);
             
             // 吕布攻击计时
             game.boss.attackInterval = setInterval(() => {
                 if (!game.bossActive) return;
                 // 随机扣血
-                if (Math.random() < 0.3) {
+                if (Math.random() < 0.2) {
                     takeDamage();
                 }
-            }, 2000);
+            }, 2500);
+        }
+        
+        function updateBossProgress() {
+            const progress = document.getElementById('bossProgress');
+            if (progress) {
+                progress.textContent = `${game.qteCorrect}/${game.qteTotal}`;
+            }
         }
         
         function nextQTE() {
@@ -1968,15 +2120,17 @@
             game.boss.currentKey = qteKey;
             
             document.getElementById('qteKey').textContent = qteKey;
+            updateBossProgress();
             
             // 设置超时
             game.boss.qteTimeout = setTimeout(() => {
                 if (game.bossActive) {
                     // QTE失败，扣血
                     takeDamage();
+                    // 继续下一个QTE
                     nextQTE();
                 }
-            }, 1500);
+            }, 2000); // 增加超时时间到2秒
         }
         
         function handleQTEInput(key) {
@@ -1997,14 +2151,24 @@
                 game.qteCorrect++;
                 game.boss.hp -= 20;
                 document.getElementById('bossHealthFill').style.width = `${game.boss.hp}%`;
+                updateBossProgress();
                 
-                // 视觉反馈
+                // 视觉反馈 - 成功击中
                 document.getElementById('boss-ui').style.background = 'rgba(255,255,0,0.2)';
+                document.getElementById('qteKey').style.transform = 'scale(1.3)';
+                document.getElementById('qteKey').style.transition = 'transform 0.2s';
                 setTimeout(() => {
                     document.getElementById('boss-ui').style.background = 'transparent';
+                    document.getElementById('qteKey').style.transform = 'scale(1)';
                 }, 200);
                 
                 nextQTE();
+            } else {
+                // 按错方向，短暂闪烁提示
+                document.getElementById('boss-ui').style.background = 'rgba(255,0,0,0.2)';
+                setTimeout(() => {
+                    document.getElementById('boss-ui').style.background = 'transparent';
+                }, 150);
             }
         }
         
@@ -2015,10 +2179,19 @@
             game.bossActive = false;
             document.getElementById('boss-ui').style.display = 'none';
             
+            // 显示胜利消息
+            game.effects.push({
+                type: 'screenFlash',
+                color: 'rgba(255,215,0,0.5)',
+                life: 500,
+                maxLife: 500,
+                alpha: 1
+            });
+            
             // 显示结局对话
             setTimeout(() => {
                 showEndingDialog();
-            }, 500);
+            }, 800);
         }
         
         function showEndingDialog() {
@@ -2048,6 +2221,24 @@
                 e.preventDefault();
                 handleQTEInput(e.key);
             }
+        });
+        
+        // QTE按钮点击事件
+        document.querySelectorAll('.qte-dir-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (game.bossActive) {
+                    const dir = btn.dataset.dir;
+                    // 转换为键盘事件
+                    let key = '';
+                    switch(dir) {
+                        case '←': key = 'ArrowLeft'; break;
+                        case '→': key = 'ArrowRight'; break;
+                        case '↑': key = 'ArrowUp'; break;
+                        case '↓': key = 'ArrowDown'; break;
+                    }
+                    handleQTEInput(key);
+                }
+            });
         });
         
         // ==================== HUD更新 ====================
@@ -2085,8 +2276,42 @@
                 drawBranchOverlay(ctx, w, h);
             }
             
+            // 绘制视觉效果
+            drawEffects(ctx, w, h);
+            
             // 教学提示
             drawTutorial(ctx, w, h);
+        }
+        
+        // 绘制视觉效果
+        function drawEffects(ctx, w, h) {
+            // 屏幕震动
+            if (game.screenShake && game.screenShake > 0) {
+                const shakeX = (Math.random() - 0.5) * game.screenShake;
+                const shakeY = (Math.random() - 0.5) * game.screenShake;
+                ctx.translate(shakeX, shakeY);
+                game.screenShake -= 1;
+            }
+            
+            // 绘制所有效果
+            game.effects.forEach(effect => {
+                if (effect.type === 'screenFlash') {
+                    ctx.fillStyle = effect.color;
+                    ctx.globalAlpha = effect.alpha;
+                    ctx.fillRect(0, 0, w, h);
+                    ctx.globalAlpha = 1;
+                } else if (effect.type === 'coinText') {
+                    ctx.font = 'bold 24px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillStyle = effect.color;
+                    ctx.globalAlpha = effect.alpha;
+                    ctx.fillText(effect.text, effect.x, effect.y);
+                    ctx.globalAlpha = 1;
+                }
+            });
+            
+            // 恢复变换
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
         }
         
         function drawBackground(ctx, w, h) {
@@ -2424,57 +2649,98 @@
         }
         
         function drawBranchOverlay(ctx, w, h) {
-            // 半透明覆盖
-            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            // 更明显的半透明覆盖
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
             ctx.fillRect(0, 0, w, h);
             
-            // 分叉指示
             const centerX = w / 2;
             const centerY = h / 2;
             
+            // 左侧区域（绿色 - 安全）
+            ctx.fillStyle = 'rgba(50,150,50,0.3)';
+            ctx.fillRect(0, 0, centerX, h);
+            
+            // 右侧区域（红色 - 危险）
+            ctx.fillStyle = 'rgba(150,50,50,0.3)';
+            ctx.fillRect(centerX, 0, centerX, h);
+            
+            // 中间分隔线
+            ctx.strokeStyle = 'rgba(255,215,0,0.8)';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([10, 5]);
+            ctx.beginPath();
+            ctx.moveTo(centerX, 0);
+            ctx.lineTo(centerX, h);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
             // 左侧箭头
             ctx.save();
-            ctx.translate(centerX - 100, centerY);
-            ctx.fillStyle = 'rgba(100,200,100,0.8)';
+            ctx.translate(centerX - 80, centerY);
+            ctx.fillStyle = 'rgba(100,200,100,0.9)';
             ctx.beginPath();
-            ctx.moveTo(-30, -20);
-            ctx.lineTo(0, 0);
-            ctx.lineTo(-30, 20);
+            ctx.moveTo(-25, -30);
+            ctx.lineTo(25, 0);
+            ctx.lineTo(-25, 30);
             ctx.closePath();
             ctx.fill();
+            ctx.font = '12px Arial';
+            ctx.fillStyle = '#fff';
+            ctx.textAlign = 'center';
+            ctx.fillText('← 左滑', 0, 60);
             ctx.restore();
             
             // 右侧箭头
             ctx.save();
-            ctx.translate(centerX + 100, centerY);
-            ctx.fillStyle = 'rgba(200,100,100,0.8)';
+            ctx.translate(centerX + 80, centerY);
+            ctx.fillStyle = 'rgba(200,100,100,0.9)';
             ctx.beginPath();
-            ctx.moveTo(30, -20);
-            ctx.lineTo(0, 0);
-            ctx.lineTo(30, 20);
+            ctx.moveTo(25, -30);
+            ctx.lineTo(-25, 0);
+            ctx.lineTo(25, 30);
             ctx.closePath();
             ctx.fill();
+            ctx.font = '12px Arial';
+            ctx.fillStyle = '#fff';
+            ctx.textAlign = 'center';
+            ctx.fillText('右滑 →', 0, 60);
             ctx.restore();
         }
         
         function drawTutorial(ctx, w, h) {
-            if (game.score > 100) return; // 100米后不显示教学
+            if (game.score > 150) return; // 150米后不显示教学
             
             const tutorials = [];
-            if (!game.tutorialShown.jump) {
-                tutorials.push({ text: '⬆️ 上滑跳跃', y: h * 0.6 });
+            const baseY = h * 0.5;
+            let offset = 0;
+            
+            // 根据当前分数逐步引导
+            if (!game.tutorialShown.jump && game.score < 50) {
+                tutorials.push({ text: '👆 上滑或点击屏幕上半部分 跳跃', y: baseY + offset * 35, highlight: true });
+                offset++;
             }
-            if (!game.tutorialShown.slide) {
-                tutorials.push({ text: '⬇️ 下滑滑铲', y: h * 0.65 });
+            if (!game.tutorialShown.slide && game.score < 80) {
+                tutorials.push({ text: '👇 下滑 滑铲', y: baseY + offset * 35 });
+                offset++;
             }
-            if (!game.tutorialShown.lane) {
-                tutorials.push({ text: '⬅️➡️ 左右滑动切换跑道', y: h * 0.7 });
+            if (!game.tutorialShown.lane && game.score < 100) {
+                tutorials.push({ text: '👈👉 左右滑动 切换跑道', y: baseY + offset * 35 });
+                offset++;
+            }
+            if (!game.tutorialShown.skill) {
+                tutorials.push({ text: '💫 点击右侧技能按钮 释放大招', y: baseY + offset * 35 });
             }
             
             tutorials.forEach((t, i) => {
-                ctx.font = '18px Arial';
+                const alpha = t.highlight ? 0.95 : 0.85;
+                // 背景
+                ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                const textWidth = ctx.measureText(t.text).width;
+                ctx.fillRect(w/2 - 160, t.y - 18, 320, 30);
+                
+                ctx.font = 'bold 16px Arial';
                 ctx.textAlign = 'center';
-                ctx.fillStyle = 'rgba(255,215,0,0.9)';
+                ctx.fillStyle = t.highlight ? `rgba(255,215,0,${alpha})` : `rgba(255,255,255,${alpha})`;
                 ctx.fillText(t.text, w / 2, t.y);
             });
         }
