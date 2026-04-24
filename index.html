@@ -1333,7 +1333,6 @@
         // ==================== 输入处理 ====================
         function handleTouchStart(e) {
             e.preventDefault();
-            if (!game.running) return;
             const touch = e.touches[0];
             game.touchStartX = touch.clientX;
             game.touchStartY = touch.clientY;
@@ -1346,6 +1345,21 @@
             const touch = e.changedTouches[0];
             const deltaX = touch.clientX - game.touchStartX;
             const deltaY = touch.clientY - game.touchStartY;
+            
+            // 如果移动距离太小，尝试点击区域判断
+            if (Math.abs(deltaX) < 15 && Math.abs(deltaY) < 15) {
+                // 点击屏幕区域判断
+                const screenHeight = window.innerHeight;
+                const clickY = touch.clientY;
+                const screenWidth = window.innerWidth;
+                const clickX = touch.clientX;
+                
+                // 上半部分点击 = 跳跃
+                if (clickY < screenHeight * 0.5) {
+                    jump();
+                    return;
+                }
+            }
             
             handleInput(deltaX, deltaY);
         }
