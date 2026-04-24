@@ -1394,7 +1394,8 @@
         }
         
         function handleInput(deltaX, deltaY) {
-            const threshold = 30;
+            // 降低阈值使操作更灵敏
+            const threshold = 20;
             
             if (game.branchActive) {
                 // 分叉选择模式
@@ -1404,6 +1405,14 @@
                     selectBranch('right');
                 }
                 return;
+            }
+            
+            // 确保有足够的移动距离
+            const absX = Math.abs(deltaX);
+            const absY = Math.abs(deltaY);
+            
+            if (absX < threshold && absY < threshold) {
+                return; // 移动距离太小，忽略
             }
             
             if (Math.abs(deltaX) > Math.abs(deltaY)) {
