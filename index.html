@@ -643,6 +643,15 @@
     <div id="game-container">
         <canvas id="gameCanvas"></canvas>
         
+        <!-- 测试按钮 - 仅用于测试 -->
+        <div id="test-controls" style="position:fixed;bottom:60px;left:10px;z-index:1000;display:none;flex-direction:column;gap:5px;">
+            <button onclick="jump()" style="padding:8px 15px;background:#FFD700;border:none;border-radius:5px;cursor:pointer;">跳</button>
+            <button onclick="slide()" style="padding:8px 15px;background:#FF6600;border:none;border-radius:5px;cursor:pointer;">滑</button>
+            <button onclick="moveLeft()" style="padding:8px 15px;background:#00FF00;border:none;border-radius:5px;cursor:pointer;">左</button>
+            <button onclick="moveRight()" style="padding:8px 15px;background:#0066FF;border:none;border-radius:5px;cursor:pointer;">右</button>
+            <button onclick="useSkill()" style="padding:8px 15px;background:#FF00FF;border:none;border-radius:5px;cursor:pointer;">技</button>
+        </div>
+        
         <!-- 剧情介绍界面 -->
         <div id="intro-screen">
             <div class="chapter-title">第一章</div>
@@ -1435,6 +1444,7 @@
             
             updateHUD();
             updatePlayerHealthUI();
+            document.getElementById('test-controls').style.display = 'flex';
             requestAnimationFrame(gameLoop);
         }
         
@@ -1442,6 +1452,7 @@
             document.getElementById('start-screen').style.display = 'none';
             game.phase = 'playing';
             game.running = true;
+            document.getElementById('test-controls').style.display = 'flex';
             requestAnimationFrame(gameLoop);
         }
         
