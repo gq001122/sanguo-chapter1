@@ -1242,6 +1242,52 @@
             document.getElementById('restartBtn').addEventListener('click', restartGame);
             document.getElementById('nextChapterBtn').addEventListener('click', showNextChapter);
             document.getElementById('replayBtn').addEventListener('click', restartGame);
+            
+            // 在game-container上添加全局点击处理（兼容云手机）
+            const gameContainer = document.getElementById('game-container');
+            
+            // 拦截intro-screen上的点击
+            document.getElementById('intro-screen').addEventListener('click', (e) => {
+                if (e.target.id === 'introBtn' || e.target.closest('#introBtn')) {
+                    showSelectScreen();
+                }
+            });
+            document.getElementById('intro-screen').addEventListener('touchend', (e) => {
+                e.preventDefault();
+                showSelectScreen();
+            });
+            
+            // 拦截select-screen上的点击
+            document.getElementById('select-screen').addEventListener('click', (e) => {
+                if (e.target.id === 'selectBtn') {
+                    startGame();
+                } else if (e.target.id === 'skipBtn') {
+                    game.tutorialShown = { swipe: true, jump: true, slide: true, lane: true, skill: true };
+                    startGame();
+                }
+            });
+            document.getElementById('select-screen').addEventListener('touchend', (e) => {
+                e.preventDefault();
+                const rect = document.getElementById('select-screen').getBoundingClientRect();
+                startGame();
+            });
+            
+            // 拦截start-screen上的点击
+            document.getElementById('start-screen').addEventListener('click', (e) => {
+                if (e.target.id === 'startBtn') {
+                    document.getElementById('start-screen').style.display = 'none';
+                    game.phase = 'playing';
+                    game.running = true;
+                    requestAnimationFrame(gameLoop);
+                }
+            });
+            document.getElementById('start-screen').addEventListener('touchend', (e) => {
+                e.preventDefault();
+                document.getElementById('start-screen').style.display = 'none';
+                game.phase = 'playing';
+                game.running = true;
+                requestAnimationFrame(gameLoop);
+            });
         }
         
         function selectCharacter(charId) {
