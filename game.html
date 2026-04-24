@@ -616,7 +616,7 @@
                 <p>十八路诸侯即将讨董，而你的命运，也将在这乱世中展开...</p>
                 <p>今夜，你将目睹改变三国格局的惊变时刻。</p>
             </div>
-            <button class="start-btn" id="introBtn">了解剧情</button>
+            <button class="start-btn" id="introBtn" onclick="showSelectScreen()">了解剧情</button>
         </div>
         
         <!-- 角色选择界面 -->
@@ -663,15 +663,15 @@
                     </div>
                 </div>
             </div>
-            <button class="start-btn" id="selectBtn">开始逃亡</button>
-            <button class="start-btn secondary" id="skipBtn" style="margin-top:15px;">跳过教学</button>
+            <button class="start-btn" id="selectBtn" onclick="startGame()">开始逃亡</button>
+            <button class="start-btn secondary" id="skipBtn" style="margin-top:15px;" onclick="skipTutorial()">跳过教学</button>
         </div>
         
         <!-- 开始界面 -->
         <div id="start-screen">
             <h1 class="game-title">🏯 三国逃亡</h1>
             <p class="game-subtitle">第一章 · 洛阳惊变</p>
-            <button class="start-btn" id="startBtn">开始跑酷</button>
+            <button class="start-btn" id="startBtn" onclick="startGameFromStart()">开始跑酷</button>
             <div class="controls-guide">
                 <p>⬆️ 上滑/上键 = 跳跃</p>
                 <p>⬇️ 下滑/下键 = 滑铲</p>
@@ -1283,6 +1283,18 @@
             
             updateHUD();
             requestAnimationFrame(gameLoop);
+        }
+        
+        function startGameFromStart() {
+            document.getElementById('start-screen').style.display = 'none';
+            game.phase = 'playing';
+            game.running = true;
+            requestAnimationFrame(gameLoop);
+        }
+        
+        function skipTutorial() {
+            game.tutorialShown = { swipe: true, jump: true, slide: true, lane: true, skill: true };
+            startGame();
         }
         
         function restartGame() {
