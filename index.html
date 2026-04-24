@@ -1243,50 +1243,36 @@
             document.getElementById('nextChapterBtn').addEventListener('click', showNextChapter);
             document.getElementById('replayBtn').addEventListener('click', restartGame);
             
-            // 在game-container上添加全局点击处理（兼容云手机）
-            const gameContainer = document.getElementById('game-container');
-            
-            // 拦截intro-screen上的点击
-            document.getElementById('intro-screen').addEventListener('click', (e) => {
-                if (e.target.id === 'introBtn' || e.target.closest('#introBtn')) {
+            // 使用document级别的点击监听器作为最后兜底
+            document.addEventListener('click', function(e) {
+                console.log('Document click at:', e.clientX, e.clientY, 'Target:', e.target.id);
+                
+                // intro-screen 界面
+                const introScreen = document.getElementById('intro-screen');
+                if (introScreen && introScreen.style.display !== 'none') {
+                    console.log('intro-screen is visible');
                     showSelectScreen();
+                    return;
                 }
-            });
-            document.getElementById('intro-screen').addEventListener('touchend', (e) => {
-                e.preventDefault();
-                showSelectScreen();
-            });
-            
-            // 拦截select-screen上的点击
-            document.getElementById('select-screen').addEventListener('click', (e) => {
-                if (e.target.id === 'selectBtn') {
+                
+                // select-screen 界面
+                const selectScreen = document.getElementById('select-screen');
+                if (selectScreen && selectScreen.style.display !== 'none') {
+                    console.log('select-screen is visible');
                     startGame();
-                } else if (e.target.id === 'skipBtn') {
-                    game.tutorialShown = { swipe: true, jump: true, slide: true, lane: true, skill: true };
-                    startGame();
+                    return;
                 }
-            });
-            document.getElementById('select-screen').addEventListener('touchend', (e) => {
-                e.preventDefault();
-                const rect = document.getElementById('select-screen').getBoundingClientRect();
-                startGame();
-            });
-            
-            // 拦截start-screen上的点击
-            document.getElementById('start-screen').addEventListener('click', (e) => {
-                if (e.target.id === 'startBtn') {
+                
+                // start-screen 界面
+                const startScreen = document.getElementById('start-screen');
+                if (startScreen && startScreen.style.display !== 'none') {
+                    console.log('start-screen is visible');
                     document.getElementById('start-screen').style.display = 'none';
                     game.phase = 'playing';
                     game.running = true;
                     requestAnimationFrame(gameLoop);
+                    return;
                 }
-            });
-            document.getElementById('start-screen').addEventListener('touchend', (e) => {
-                e.preventDefault();
-                document.getElementById('start-screen').style.display = 'none';
-                game.phase = 'playing';
-                game.running = true;
-                requestAnimationFrame(gameLoop);
             });
         }
         
