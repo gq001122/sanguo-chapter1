@@ -33,6 +33,10 @@
             max-height: 100vh;
             overflow: hidden;
             background: #1a0a0a;
+            touch-action: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
         
         #gameCanvas {
@@ -43,6 +47,7 @@
             height: 100%;
             display: block;
             z-index: 1;
+            touch-action: none;
         }
         
         /* 剧情开始界面 */
@@ -1168,14 +1173,21 @@
         }
         
         function setupEventListeners() {
-            // 触控
+            const gameContainer = document.getElementById('game-container');
+            
+            // 触控 - 同时监听canvas和container
             game.canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
             game.canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
             game.canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+            gameContainer.addEventListener('touchstart', handleTouchStart, { passive: false });
+            gameContainer.addEventListener('touchend', handleTouchEnd, { passive: false });
+            gameContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
             
             // 鼠标（PC）
             game.canvas.addEventListener('mousedown', handleMouseDown);
             game.canvas.addEventListener('mouseup', handleMouseUp);
+            gameContainer.addEventListener('mousedown', handleMouseDown);
+            gameContainer.addEventListener('mouseup', handleMouseUp);
             
             // 键盘
             document.addEventListener('keydown', handleKeyDown);
