@@ -1,0 +1,2381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>三国逃亡 - 第一章：洛阳惊变</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            min-height: 100dvh;
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            overflow: hidden;
+            touch-action: none;
+            user-select: none;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            aspect-ratio: 9/16;
+            max-height: 100vh;
+            overflow: hidden;
+            background: #1a0a0a;
+        }
+        
+        #gameCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        
+        /* 剧情开始界面 */
+        #intro-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, #1a0505 0%, #2d1a1a 50%, #1a0505 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            padding: 20px;
+        }
+        
+        .chapter-title {
+            font-size: 1.2em;
+            color: #FFD700;
+            text-transform: uppercase;
+            letter-spacing: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .intro-title {
+            font-size: 2.2em;
+            color: #fff;
+            text-shadow: 0 0 30px rgba(255,100,100,0.5);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .intro-text {
+            color: rgba(255,255,255,0.85);
+            font-size: 1em;
+            line-height: 1.8;
+            text-align: center;
+            max-width: 90%;
+            margin-bottom: 40px;
+            background: rgba(0,0,0,0.4);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,215,0,0.3);
+        }
+        
+        .intro-text p {
+            margin-bottom: 15px;
+        }
+        
+        .intro-text p:last-child {
+            margin-bottom: 0;
+        }
+        
+        /* 角色选择界面 */
+        #select-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, #1a0505 0%, #2d1010 50%, #1a0505 100%);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            z-index: 15;
+            padding: 20px;
+        }
+        
+        .select-title {
+            font-size: 1.3em;
+            color: #FFD700;
+            margin: 20px 0;
+        }
+        
+        .character-select {
+            display: flex;
+            gap: 12px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .char-btn {
+            width: 100px;
+            height: 140px;
+            background: rgba(255,255,255,0.08);
+            border: 2px solid rgba(255,215,0,0.3);
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 10px 5px;
+        }
+        
+        .char-btn:hover, .char-btn.selected {
+            border-color: #FFD700;
+            background: rgba(255,215,0,0.2);
+            transform: scale(1.08);
+            box-shadow: 0 0 25px rgba(255,215,0,0.4);
+        }
+        
+        .char-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin-bottom: 8px;
+            border: 2px solid rgba(255,255,255,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+        }
+        
+        .char-name {
+            color: #fff;
+            font-size: 1em;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        
+        .char-skill {
+            color: rgba(255,215,0,0.9);
+            font-size: 0.7em;
+            text-align: center;
+            line-height: 1.3;
+        }
+        
+        .skill-desc {
+            color: rgba(255,255,255,0.6);
+            font-size: 0.65em;
+            margin-top: 5px;
+            text-align: center;
+        }
+        
+        .char-stats {
+            display: flex;
+            gap: 3px;
+            margin-top: 6px;
+        }
+        
+        .stat-bar {
+            width: 20px;
+            height: 4px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
+        }
+        
+        .stat-bar.filled {
+            background: linear-gradient(90deg, #FFD700, #FFA500);
+        }
+        
+        /* 开始界面 */
+        #start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('images/bg_palace.jpg') center/cover no-repeat;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+        
+        #start-screen::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, rgba(26,10,10,0.7) 0%, rgba(50,20,20,0.6) 50%, rgba(26,10,10,0.8) 100%);
+        }
+        
+        .game-title {
+            font-size: 2.5em;
+            color: #FFD700;
+            text-shadow: 3px 3px 10px rgba(0,0,0,0.8), 0 0 30px rgba(255,215,0,0.4);
+            margin-bottom: 10px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .game-subtitle {
+            font-size: 1em;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 30px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .start-btn {
+            background: linear-gradient(180deg, #FFD700, #FF8C00);
+            color: #000;
+            border: none;
+            padding: 15px 50px;
+            font-size: 1.2em;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            margin-top: 20px;
+            box-shadow: 0 5px 25px rgba(255,165,0,0.5);
+            position: relative;
+            z-index: 1;
+            transition: transform 0.2s;
+        }
+        
+        .start-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .start-btn.secondary {
+            background: linear-gradient(180deg, #666, #444);
+            color: #fff;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            font-size: 1em;
+            padding: 12px 40px;
+        }
+        
+        .controls-guide {
+            color: rgba(255,255,255,0.7);
+            font-size: 0.85em;
+            margin-top: 30px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            line-height: 1.6;
+        }
+        
+        /* 游戏结束界面 */
+        #gameover-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 25;
+        }
+        
+        .gameover-title {
+            font-size: 2em;
+            color: #FF4444;
+            margin-bottom: 20px;
+        }
+        
+        .gameover-title.victory {
+            color: #FFD700;
+        }
+        
+        .score-display {
+            color: #FFD700;
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+        
+        .score-label {
+            color: rgba(255,255,255,0.7);
+            font-size: 1em;
+            margin-bottom: 30px;
+        }
+        
+        .best-score {
+            color: rgba(255,255,255,0.5);
+            font-size: 0.9em;
+            margin-bottom: 40px;
+        }
+        
+        /* 章节完成界面 */
+        #chapter-complete {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 25;
+            padding: 20px;
+        }
+        
+        .complete-title {
+            font-size: 2em;
+            color: #FFD700;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px rgba(255,215,0,0.5);
+        }
+        
+        .complete-stats {
+            background: rgba(255,255,255,0.1);
+            padding: 25px 40px;
+            border-radius: 15px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            color: #fff;
+            font-size: 1.1em;
+        }
+        
+        .stat-row span:last-child {
+            color: #FFD700;
+            font-weight: bold;
+        }
+        
+        /* HUD */
+        #hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px;
+            display: none;
+            justify-content: space-between;
+            z-index: 5;
+        }
+        
+        .hud-left, .hud-right {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .hud-item {
+            background: rgba(0,0,0,0.6);
+            padding: 8px 15px;
+            border-radius: 20px;
+            color: #fff;
+            font-size: 0.9em;
+            font-weight: bold;
+            border: 2px solid rgba(255,215,0,0.5);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .skill-btn {
+            background: linear-gradient(180deg, rgba(255,215,0,0.8), rgba(255,140,0,0.8));
+            border: 2px solid #FFD700;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .skill-btn.on-cooldown {
+            background: rgba(100,100,100,0.6);
+            border-color: #666;
+        }
+        
+        .skill-cooldown {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 0%;
+            background: rgba(0,0,0,0.5);
+            transition: height 0.1s linear;
+        }
+        
+        /* 剧情对话框 */
+        #dialog-box {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px;
+            display: none;
+            z-index: 10;
+        }
+        
+        .dialog-bg {
+            background: rgba(0,0,0,0.85);
+            border-radius: 15px;
+            padding: 20px;
+            border: 2px solid rgba(255,215,0,0.5);
+        }
+        
+        .dialog-speaker {
+            color: #FFD700;
+            font-size: 0.9em;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .dialog-text {
+            color: #fff;
+            font-size: 1em;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        
+        .dialog-choices {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .choice-btn {
+            background: rgba(255,215,0,0.2);
+            border: 1px solid rgba(255,215,0,0.5);
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 0.95em;
+            transition: all 0.2s;
+        }
+        
+        .choice-btn:hover, .choice-btn:active {
+            background: rgba(255,215,0,0.4);
+            border-color: #FFD700;
+        }
+        
+        /* 分叉选择提示 */
+        #branch-prompt {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+            z-index: 10;
+            text-align: center;
+            pointer-events: none;
+        }
+        
+        .branch-text {
+            font-size: 1.5em;
+            color: #FFD700;
+            text-shadow: 0 0 20px rgba(255,215,0,0.8);
+            animation: pulse 1s ease-in-out infinite;
+        }
+        
+        .branch-hint {
+            font-size: 0.9em;
+            color: rgba(255,255,255,0.8);
+            margin-top: 10px;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
+        }
+        
+        /* BOSS战界面 */
+        #boss-ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            z-index: 15;
+        }
+        
+        .boss-health-bar {
+            position: absolute;
+            top: 60px;
+            left: 15px;
+            right: 15px;
+            height: 20px;
+            background: rgba(0,0,0,0.7);
+            border-radius: 10px;
+            border: 2px solid #ff4444;
+            overflow: hidden;
+        }
+        
+        .boss-health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff4444, #ff6666);
+            transition: width 0.3s;
+        }
+        
+        .boss-name {
+            position: absolute;
+            top: 35px;
+            left: 15px;
+            color: #ff4444;
+            font-size: 1em;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(255,68,68,0.8);
+        }
+        
+        .boss-hint {
+            position: absolute;
+            bottom: 30%;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #fff;
+            font-size: 2em;
+            text-align: center;
+            text-shadow: 0 0 20px rgba(255,255,255,0.8);
+            animation: qteFlash 0.5s ease-in-out infinite;
+        }
+        
+        .qte-key {
+            display: inline-block;
+            background: rgba(255,215,0,0.9);
+            color: #000;
+            padding: 10px 25px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+        
+        @keyframes qteFlash {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .player-health-bar {
+            position: absolute;
+            bottom: 30px;
+            left: 15px;
+            right: 15px;
+            height: 15px;
+            background: rgba(0,0,0,0.7);
+            border-radius: 8px;
+            border: 2px solid #4CAF50;
+            overflow: hidden;
+        }
+        
+        .player-health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            transition: width 0.3s;
+        }
+        
+        /* 分隔线等特效 */
+        .road-line {
+            position: absolute;
+            bottom: 30%;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent 0%, rgba(255,215,0,0.8) 20%, rgba(255,215,0,0.8) 80%, transparent 100%);
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        
+        <!-- 剧情介绍界面 -->
+        <div id="intro-screen">
+            <div class="chapter-title">第一章</div>
+            <h1 class="intro-title">🏯 洛阳惊变</h1>
+            <div class="intro-text">
+                <p>东汉末年，董卓专权，洛阳皇宫笼罩在黑暗之中。</p>
+                <p>十八路诸侯即将讨董，而你的命运，也将在这乱世中展开...</p>
+                <p>今夜，你将目睹改变三国格局的惊变时刻。</p>
+            </div>
+            <button class="start-btn" id="introBtn">了解剧情</button>
+        </div>
+        
+        <!-- 角色选择界面 -->
+        <div id="select-screen">
+            <div class="select-title">🎭 选择你的角色</div>
+            <div class="character-select">
+                <div class="char-btn selected" data-char="zhaoyun">
+                    <div class="char-avatar" style="background: linear-gradient(135deg, #E8F5E9, #81C784);">💫</div>
+                    <div class="char-name">赵云</div>
+                    <div class="char-skill">⚡龙胆冲刺</div>
+                    <div class="skill-desc">无敌冲刺3秒</div>
+                    <div class="char-stats">
+                        <div class="stat-bar filled"></div>
+                        <div class="stat-bar filled"></div>
+                        <div class="stat-bar filled"></div>
+                        <div class="stat-bar filled"></div>
+                        <div class="stat-bar"></div>
+                    </div>
+                </div>
+                <div class="char-btn" data-char="zhangfei">
+                    <div class="char-avatar" style="background: linear-gradient(135deg, #FFEBEE, #EF5350);">🔥</div>
+                    <div class="char-name">张飞</div>
+                    <div class="char-skill">💥怒吼震击</div>
+                    <div class="skill-desc">震开前方障碍</div>
+                    <div class="char-stats">
+                        <div class="stat-bar filled"></div>
+                        <div class="stat-bar filled"></div>
+                        <div class="stat-bar filled"></div>
+                        <div class="stat-bar filled"></div>
+                        <div class="stat-bar filled"></div>
+                    </div>
+                </div>
+                <div class="char-btn" data-char="diaochan">
+                    <div class="char-avatar" style="background: linear-gradient(135deg, #FCE4EC, #F48FB1);">🌸</div>
+                    <div class="char-name">貂蝉</div>
+                    <div class="char-skill">✨舞蝶幻影</div>
+                    <div class="skill-desc">无敌状态3秒</div>
+                    <div class="char-stats">
+                        <div class="stat-bar filled"></div>
+                        <div class="stat-bar filled"></div>
+                        <div class="stat-bar filled"></div>
+                        <div class="stat-bar"></div>
+                        <div class="stat-bar"></div>
+                    </div>
+                </div>
+            </div>
+            <button class="start-btn" id="selectBtn">开始逃亡</button>
+            <button class="start-btn secondary" id="skipBtn" style="margin-top:15px;">跳过教学</button>
+        </div>
+        
+        <!-- 开始界面 -->
+        <div id="start-screen">
+            <h1 class="game-title">🏯 三国逃亡</h1>
+            <p class="game-subtitle">第一章 · 洛阳惊变</p>
+            <button class="start-btn" id="startBtn">开始跑酷</button>
+            <div class="controls-guide">
+                <p>⬆️ 上滑/上键 = 跳跃</p>
+                <p>⬇️ 下滑/下键 = 滑铲</p>
+                <p>⬅️ ➡️ 左右滑动 = 切换跑道</p>
+                <p>💫 点击技能按钮 = 释放技能</p>
+            </div>
+        </div>
+        
+        <!-- 游戏结束界面 -->
+        <div id="gameover-screen">
+            <h2 class="gameover-title" id="gameoverTitle">💀 逃亡失败</h2>
+            <div class="score-display" id="finalScore">0</div>
+            <div class="score-label">米</div>
+            <div class="best-score" id="bestScore">最高纪录: 0米</div>
+            <button class="start-btn" id="restartBtn">重新开始</button>
+        </div>
+        
+        <!-- 章节完成界面 -->
+        <div id="chapter-complete">
+            <h2 class="complete-title">🎉 第一章完成！</h2>
+            <div class="complete-stats">
+                <div class="stat-row"><span>逃亡距离</span><span id="statDistance">0米</span></div>
+                <div class="stat-row"><span>获得金币</span><span id="statCoins">0</span></div>
+                <div class="stat-row"><span>关键选择</span><span id="statChoices">-</span></div>
+                <div class="stat-row"><span>技能使用</span><span id="statSkills">0次</span></div>
+            </div>
+            <button class="start-btn" id="nextChapterBtn">下一章预告</button>
+            <button class="start-btn secondary" id="replayBtn" style="margin-top:15px;">重玩本章</button>
+        </div>
+        
+        <!-- HUD -->
+        <div id="hud">
+            <div class="hud-left">
+                <div class="hud-item" id="scoreHud">🏃 0米</div>
+                <div class="hud-item" id="coinHud">🪙 0</div>
+            </div>
+            <div class="hud-right">
+                <div class="hud-item skill-btn" id="skillBtn">
+                    <span id="skillIcon">⚡</span>
+                    <span id="skillName">技能</span>
+                    <div class="skill-cooldown" id="skillCooldown"></div>
+                </div>
+                <div class="hud-item" id="chapterHud">第1章</div>
+            </div>
+        </div>
+        
+        <!-- 剧情对话框 -->
+        <div id="dialog-box">
+            <div class="dialog-bg">
+                <div class="dialog-speaker" id="dialogSpeaker"> narrator</div>
+                <div class="dialog-text" id="dialogText"></div>
+                <div class="dialog-choices" id="dialogChoices"></div>
+            </div>
+        </div>
+        
+        <!-- 分叉选择提示 -->
+        <div id="branch-prompt">
+            <div class="branch-text" id="branchText">⚔️ 前方分叉路口 ⚔️</div>
+            <div class="branch-hint" id="branchHint">左滑选择左侧道路 | 右滑选择右侧道路</div>
+        </div>
+        
+        <!-- BOSS战UI -->
+        <div id="boss-ui">
+            <div class="boss-name" id="bossName">吕布</div>
+            <div class="boss-health-bar">
+                <div class="boss-health-fill" id="bossHealthFill"></div>
+            </div>
+            <div class="boss-hint" id="bossHint">
+                <span class="qte-key" id="qteKey">→</span>
+            </div>
+            <div class="player-health-bar">
+                <div class="player-health-fill" id="playerHealthFill"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 游戏常量 ====================
+        const JUMP_DURATION = 500;
+        const SLIDE_DURATION = 400;
+        const LANE_SWITCH_DURATION = 200;
+        const ROAD_SEGMENT_LENGTH = 200;
+        const ROAD_WIDTH = 400;
+        const LANE_COUNT = 3;
+        
+        // 第一章配置
+        const CHAPTER1_CONFIG = {
+            name: '洛阳惊变',
+            duration: 1800, // 约30秒demo时间
+            phase1End: 600,  // 上半部分结束距离
+            bossStart: 900, // BOSS战开始距离
+            
+            // 分叉选择点
+            branchPoints: [
+                { distance: 300, text: '左侧走宫女通道', hint: '安全但耗时' },
+                { distance: 700, text: '右侧走太监通道', hint: '危险但快速' }
+            ],
+            
+            // 剧情对话点
+            dialogPoints: [
+                { 
+                    distance: 50, 
+                    speaker: '旁白',
+                    text: '东汉末年，董卓专权。今夜，你将见证改变三国格局的惊变...',
+                    auto: true,
+                    duration: 3000
+                },
+                { 
+                    distance: 200,
+                    speaker: '貂蝉',
+                    text: '（低声）将军，董卓的人正在搜寻我...我必须离开这里。',
+                    choices: [
+                        { text: '我带你走', result: 'protect' },
+                        { text: '你先躲起来', result: 'hide' }
+                    ]
+                }
+            ]
+        };
+        
+        // 角色配置
+        const CHARACTERS = {
+            zhaoyun: {
+                name: '赵云',
+                color: '#81C784',
+                skill: '龙胆冲刺',
+                skillIcon: '⚡',
+                skillDesc: '无敌冲刺3秒',
+                cooldown: 15000,
+                stats: { hp: 3, speed: 1.2, jump: 1.0, skill: 1.0 }
+            },
+            zhangfei: {
+                name: '张飞',
+                color: '#EF5350',
+                skill: '怒吼震击',
+                skillIcon: '💥',
+                skillDesc: '震开所有障碍',
+                cooldown: 20000,
+                stats: { hp: 5, speed: 0.9, jump: 0.7, skill: 1.5 }
+            },
+            diaochan: {
+                name: '貂蝉',
+                color: '#F48FB1',
+                skill: '舞蝶幻影',
+                skillIcon: '🌸',
+                skillDesc: '无敌状态3秒',
+                cooldown: 18000,
+                stats: { hp: 2, speed: 1.1, jump: 1.3, skill: 1.2 }
+            }
+        };
+        
+        // 障碍物类型（洛阳皇宫主题）
+        const OBSTACLE_TYPES = [
+            { emoji: '🏛️', name: '石柱', jumpable: true, slideable: false },
+            { emoji: '📦', name: '木箱', jumpable: true, slideable: false },
+            { emoji: '⚔️', name: '兵器架', jumpable: false, slideable: true },
+            { emoji: '🔥', name: '火盆', jumpable: true, slideable: false },
+            { emoji: '🪑', name: '案几', jumpable: false, slideable: true },
+            { emoji: '🏺', name: '陶罐', jumpable: true, slideable: true }
+        ];
+        
+        // ==================== 游戏状态 ====================
+        let game = {
+            canvas: null,
+            ctx: null,
+            width: 0,
+            height: 0,
+            
+            // 游戏阶段
+            phase: 'intro', // intro -> select -> start -> playing -> boss -> complete
+            running: false,
+            
+            // 统计数据
+            score: 0,
+            coins: 0,
+            bestScore: parseInt(localStorage.getItem('chapter1_best')) || 0,
+            skillUses: 0,
+            choices: [],
+            
+            // 角色
+            character: 'zhaoyun',
+            charData: CHARACTERS.zhaoyun,
+            player: {
+                lane: 1, // 0=左, 1=中, 2=右
+                targetLane: 1,
+                jumping: false,
+                sliding: false,
+                invincible: false,
+                jumpStart: 0,
+                slideStart: 0,
+                laneSwitchStart: 0,
+                z: 0
+            },
+            
+            // 技能状态
+            skillActive: false,
+            skillCooldownStart: 0,
+            skillReady: true,
+            
+            // 道路生成
+            roadSegments: [],
+            currentSegmentIndex: 0,
+            
+            // 障碍物与收集
+            obstacles: [],
+            coinItems: [],
+            decorations: [],
+            
+            // 相机
+            cameraOffset: { x: 0, angle: 0 },
+            
+            // 分叉选择
+            branchActive: false,
+            branchResult: null,
+            nearestBranch: null,
+            
+            // 剧情对话
+            dialogActive: false,
+            currentDialog: null,
+            dialogIndex: 0,
+            
+            // BOSS战
+            bossActive: false,
+            boss: {
+                name: '吕布',
+                hp: 100,
+                maxHp: 100,
+                qteIndex: 0,
+                qteSequence: [],
+                qteTimeout: null,
+                attackInterval: null
+            },
+            playerHp: 3,
+            playerMaxHp: 3,
+            qteCorrect: 0,
+            qteTotal: 5,
+            
+            // 触控
+            touchStartX: 0,
+            touchStartY: 0,
+            
+            // 资源
+            bgImages: [],
+            assetsLoaded: false,
+            
+            // 教学
+            tutorialStep: 0,
+            tutorialShown: {
+                swipe: false,
+                jump: false,
+                slide: false,
+                lane: false,
+                skill: false
+            }
+        };
+        
+        // ==================== 初始化 ====================
+        async function init() {
+            game.canvas = document.getElementById('gameCanvas');
+            game.ctx = game.canvas.getContext('2d');
+            
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            
+            // 预加载
+            await loadAssets();
+            
+            // 事件监听
+            setupEventListeners();
+            
+            // 更新最高分显示
+            document.getElementById('bestScore').textContent = `最高纪录: ${game.bestScore}米`;
+        }
+        
+        async function loadAssets() {
+            // 创建程序化背景
+            createProceduralAssets();
+            game.assetsLoaded = true;
+        }
+        
+        function createProceduralAssets() {
+            // 创建洛阳皇宫风格背景
+            const bgCanvas = document.createElement('canvas');
+            bgCanvas.width = 500;
+            bgCanvas.height = 889;
+            const bgCtx = bgCanvas.getContext('2d');
+            
+            // 渐变天空
+            const skyGrad = bgCtx.createLinearGradient(0, 0, 0, 400);
+            skyGrad.addColorStop(0, '#1a0505');
+            skyGrad.addColorStop(0.5, '#3d1a1a');
+            skyGrad.addColorStop(1, '#5a2828');
+            bgCtx.fillStyle = skyGrad;
+            bgCtx.fillRect(0, 0, 500, 400);
+            
+            // 绘制宫殿轮廓
+            bgCtx.fillStyle = '#2a1010';
+            
+            // 主殿
+            bgCtx.beginPath();
+            bgCtx.moveTo(100, 400);
+            bgCtx.lineTo(150, 280);
+            bgCtx.lineTo(350, 280);
+            bgCtx.lineTo(400, 400);
+            bgCtx.fill();
+            
+            // 屋顶
+            bgCtx.fillStyle = '#3d1a1a';
+            bgCtx.beginPath();
+            bgCtx.moveTo(80, 280);
+            bgCtx.lineTo(250, 180);
+            bgCtx.lineTo(420, 280);
+            bgCtx.fill();
+            
+            // 飞檐
+            bgCtx.strokeStyle = '#FFD700';
+            bgCtx.lineWidth = 3;
+            bgCtx.beginPath();
+            bgCtx.moveTo(80, 280);
+            bgCtx.quadraticCurveTo(60, 270, 50, 290);
+            bgCtx.moveTo(420, 280);
+            bgCtx.quadraticCurveTo(440, 270, 450, 290);
+            bgCtx.stroke();
+            
+            // 柱子
+            bgCtx.fillStyle = '#4a2020';
+            for (let i = 0; i < 5; i++) {
+                bgCtx.fillRect(110 + i * 70, 280, 15, 120);
+            }
+            
+            // 灯笼
+            for (let i = 0; i < 4; i++) {
+                drawLantern(bgCtx, 140 + i * 90, 260, 20);
+            }
+            
+            // 地面
+            const groundGrad = bgCtx.createLinearGradient(0, 400, 0, 889);
+            groundGrad.addColorStop(0, '#3d2828');
+            groundGrad.addColorStop(1, '#1a0a0a');
+            bgCtx.fillStyle = groundGrad;
+            bgCtx.fillRect(0, 400, 500, 489);
+            
+            // 转换为图片
+            game.palaceBg = new Image();
+            game.palaceBg.src = bgCanvas.toDataURL();
+            
+            // 创建屋顶背景
+            const roofBg = document.createElement('canvas');
+            roofBg.width = 500;
+            roofBg.height = 889;
+            const roofCtx = roofBg.getContext('2d');
+            
+            // 夜空
+            const nightGrad = roofCtx.createLinearGradient(0, 0, 0, 400);
+            nightGrad.addColorStop(0, '#0a0520');
+            nightGrad.addColorStop(0.5, '#1a1030');
+            nightGrad.addColorStop(1, '#2d1a3d');
+            roofCtx.fillStyle = nightGrad;
+            roofCtx.fillRect(0, 0, 500, 400);
+            
+            // 月亮
+            roofCtx.fillStyle = '#fffacd';
+            roofCtx.beginPath();
+            roofCtx.arc(380, 80, 40, 0, Math.PI * 2);
+            roofCtx.fill();
+            
+            // 星星
+            roofCtx.fillStyle = '#fff';
+            for (let i = 0; i < 50; i++) {
+                const x = Math.random() * 500;
+                const y = Math.random() * 350;
+                const size = Math.random() * 2 + 1;
+                roofCtx.beginPath();
+                roofCtx.arc(x, y, size, 0, Math.PI * 2);
+                roofCtx.fill();
+            }
+            
+            // 屋顶瓦片纹理
+            roofCtx.fillStyle = '#2a1a2a';
+            roofCtx.fillRect(0, 300, 500, 200);
+            
+            // 绘制瓦片
+            for (let row = 0; row < 10; row++) {
+                for (let col = 0; col < 15; col++) {
+                    const x = col * 35 + (row % 2) * 17;
+                    const y = 300 + row * 20;
+                    roofCtx.fillStyle = row % 2 === 0 ? '#3d2a3d' : '#2a1a2a';
+                    roofCtx.beginPath();
+                    roofCtx.moveTo(x, y);
+                    roofCtx.lineTo(x + 35, y);
+                    roofCtx.lineTo(x + 30, y + 10);
+                    roofCtx.lineTo(x + 5, y + 10);
+                    roofCtx.closePath();
+                    roofCtx.fill();
+                }
+            }
+            
+            // 屋脊
+            roofCtx.fillStyle = '#4a3a4a';
+            roofCtx.fillRect(0, 290, 500, 15);
+            
+            // 远处宫殿
+            roofCtx.fillStyle = '#1a1020';
+            roofCtx.beginPath();
+            roofCtx.moveTo(150, 400);
+            roofCtx.lineTo(200, 320);
+            roofCtx.lineTo(300, 320);
+            roofCtx.lineTo(350, 400);
+            roofCtx.fill();
+            
+            // 地面
+            const roofGroundGrad = roofCtx.createLinearGradient(0, 400, 0, 889);
+            roofGroundGrad.addColorStop(0, '#1a1525');
+            roofGroundGrad.addColorStop(1, '#0a0510');
+            roofCtx.fillStyle = roofGroundGrad;
+            roofCtx.fillRect(0, 400, 500, 489);
+            
+            // 添加一些瓦片碎片
+            roofCtx.fillStyle = '#3d2a3d';
+            for (let i = 0; i < 20; i++) {
+                const x = Math.random() * 500;
+                const y = 450 + Math.random() * 400;
+                const w = 15 + Math.random() * 20;
+                const h = 5 + Math.random() * 10;
+                roofCtx.save();
+                roofCtx.translate(x, y);
+                roofCtx.rotate(Math.random() * Math.PI / 4);
+                roofCtx.fillRect(-w/2, -h/2, w, h);
+                roofCtx.restore();
+            }
+            
+            game.roofBg = new Image();
+            game.roofBg.src = roofBg.toDataURL();
+            
+            // BOSS背景
+            const bossBg = document.createElement('canvas');
+            bossBg.width = 500;
+            bossBg.height = 889;
+            const bossCtx = bossBg.getContext('2d');
+            
+            // 深红背景
+            const bossGrad = bossCtx.createRadialGradient(250, 444, 0, 250, 444, 400);
+            bossGrad.addColorStop(0, '#4a1010');
+            bossGrad.addColorStop(1, '#1a0505');
+            bossCtx.fillStyle = bossGrad;
+            bossCtx.fillRect(0, 0, 500, 889);
+            
+            // 火焰效果
+            for (let i = 0; i < 30; i++) {
+                const x = Math.random() * 500;
+                const y = 600 + Math.random() * 300;
+                const size = 20 + Math.random() * 40;
+                bossCtx.fillStyle = `rgba(255, ${50 + Math.random() * 100}, 0, ${0.1 + Math.random() * 0.2})`;
+                bossCtx.beginPath();
+                bossCtx.arc(x, y, size, 0, Math.PI * 2);
+                bossCtx.fill();
+            }
+            
+            game.bossBg = new Image();
+            game.bossBg.src = bossBg.toDataURL();
+        }
+        
+        function drawLantern(ctx, x, y, size) {
+            // 绳
+            ctx.strokeStyle = '#8B4513';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(x, y - 30);
+            ctx.lineTo(x, y - size);
+            ctx.stroke();
+            
+            // 灯笼主体
+            ctx.fillStyle = '#FF4500';
+            ctx.beginPath();
+            ctx.ellipse(x, y, size * 0.6, size, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 光晕
+            const glowGrad = ctx.createRadialGradient(x, y, 0, x, y, size * 1.5);
+            glowGrad.addColorStop(0, 'rgba(255, 200, 100, 0.6)');
+            glowGrad.addColorStop(1, 'rgba(255, 100, 0, 0)');
+            ctx.fillStyle = glowGrad;
+            ctx.beginPath();
+            ctx.arc(x, y, size * 1.5, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 顶部
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(x - size * 0.3, y - size - 5, size * 0.6, 8);
+        }
+        
+        function resizeCanvas() {
+            const container = document.getElementById('game-container');
+            const rect = container.getBoundingClientRect();
+            game.canvas.width = rect.width * window.devicePixelRatio;
+            game.canvas.height = rect.height * window.devicePixelRatio;
+            game.width = rect.width;
+            game.height = rect.height;
+            game.ctx.scale(window.devicePixelRatio, game.devicePixelRatio);
+        }
+        
+        function setupEventListeners() {
+            // 触控
+            game.canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+            game.canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
+            game.canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+            
+            // 鼠标（PC）
+            game.canvas.addEventListener('mousedown', handleMouseDown);
+            game.canvas.addEventListener('mouseup', handleMouseUp);
+            
+            // 键盘
+            document.addEventListener('keydown', handleKeyDown);
+            
+            // 技能按钮
+            document.getElementById('skillBtn').addEventListener('click', useSkill);
+            document.getElementById('skillBtn').addEventListener('touchend', (e) => {
+                e.preventDefault();
+                useSkill();
+            });
+            
+            // 角色选择
+            document.querySelectorAll('.char-btn').forEach(btn => {
+                btn.addEventListener('click', () => selectCharacter(btn.dataset.char));
+            });
+            
+            // 按钮
+            document.getElementById('introBtn').addEventListener('click', showSelectScreen);
+            document.getElementById('selectBtn').addEventListener('click', startGame);
+            document.getElementById('skipBtn').addEventListener('click', () => {
+                game.tutorialShown = { swipe: true, jump: true, slide: true, lane: true, skill: true };
+                startGame();
+            });
+            document.getElementById('startBtn').addEventListener('click', () => {
+                document.getElementById('start-screen').style.display = 'none';
+                game.phase = 'playing';
+                game.running = true;
+                requestAnimationFrame(gameLoop);
+            });
+            document.getElementById('restartBtn').addEventListener('click', restartGame);
+            document.getElementById('nextChapterBtn').addEventListener('click', showNextChapter);
+            document.getElementById('replayBtn').addEventListener('click', restartGame);
+        }
+        
+        function selectCharacter(charId) {
+            document.querySelectorAll('.char-btn').forEach(b => b.classList.remove('selected'));
+            document.querySelector(`[data-char="${charId}"]`).classList.add('selected');
+            game.character = charId;
+            game.charData = CHARACTERS[charId];
+            
+            // 更新技能UI
+            document.getElementById('skillIcon').textContent = game.charData.skillIcon;
+            document.getElementById('skillName').textContent = game.charData.skill;
+            game.playerMaxHp = game.charData.stats.hp;
+            game.playerHp = game.playerMaxHp;
+        }
+        
+        // ==================== 界面切换 ====================
+        function showSelectScreen() {
+            document.getElementById('intro-screen').style.display = 'none';
+            document.getElementById('select-screen').style.display = 'flex';
+        }
+        
+        function startGame() {
+            document.getElementById('intro-screen').style.display = 'none';
+            document.getElementById('select-screen').style.display = 'none';
+            document.getElementById('gameover-screen').style.display = 'none';
+            document.getElementById('chapter-complete').style.display = 'none';
+            document.getElementById('hud').style.display = 'flex';
+            
+            // 重置游戏状态
+            game.phase = 'playing';
+            game.running = true;
+            game.score = 0;
+            game.coins = 0;
+            game.skillUses = 0;
+            game.choices = [];
+            game.skillReady = true;
+            game.skillActive = false;
+            game.player.lane = 1;
+            game.player.targetLane = 1;
+            game.player.jumping = false;
+            game.player.sliding = false;
+            game.player.invincible = false;
+            game.player.z = 0;
+            game.cameraOffset = { x: 0, angle: 0 };
+            game.roadSegments = [];
+            game.obstacles = [];
+            game.coinItems = [];
+            game.decorations = [];
+            game.branchActive = false;
+            game.branchResult = null;
+            game.dialogActive = false;
+            game.dialogIndex = 0;
+            game.bossActive = false;
+            game.boss.hp = 100;
+            game.playerHp = game.playerMaxHp;
+            
+            // 初始化道路
+            for (let i = 0; i < 30; i++) {
+                addRoadSegment();
+            }
+            
+            updateHUD();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        function restartGame() {
+            startGame();
+        }
+        
+        function showNextChapter() {
+            document.getElementById('chapter-complete').style.display = 'none';
+            alert('第二章「洛阳大火」开发中...\n敬请期待！');
+            location.reload();
+        }
+        
+        function showChapterComplete() {
+            game.running = false;
+            game.phase = 'complete';
+            
+            document.getElementById('hud').style.display = 'none';
+            document.getElementById('boss-ui').style.display = 'none';
+            document.getElementById('chapter-complete').style.display = 'flex';
+            
+            document.getElementById('statDistance').textContent = `${game.score}米`;
+            document.getElementById('statCoins').textContent = `${game.coins}`;
+            document.getElementById('statChoices').textContent = game.choices.length > 0 ? game.choices.join(', ') : '无';
+            document.getElementById('statSkills').textContent = `${game.skillUses}次`;
+        }
+        
+        function gameOver(isVictory = false) {
+            game.running = false;
+            game.phase = 'gameover';
+            
+            if (game.score > game.bestScore) {
+                game.bestScore = game.score;
+                localStorage.setItem('chapter1_best', game.bestScore);
+            }
+            
+            document.getElementById('hud').style.display = 'none';
+            document.getElementById('boss-ui').style.display = 'none';
+            document.getElementById('gameover-screen').style.display = 'flex';
+            
+            const title = document.getElementById('gameoverTitle');
+            title.textContent = isVictory ? '🎉 成功逃脱！' : '💀 逃亡失败';
+            title.className = isVictory ? 'gameover-title victory' : 'gameover-title';
+            
+            document.getElementById('finalScore').textContent = game.score;
+            document.getElementById('bestScore').textContent = `最高纪录: ${game.bestScore}米`;
+        }
+        
+        // ==================== 输入处理 ====================
+        function handleTouchStart(e) {
+            e.preventDefault();
+            if (!game.running) return;
+            const touch = e.touches[0];
+            game.touchStartX = touch.clientX;
+            game.touchStartY = touch.clientY;
+        }
+        
+        function handleTouchEnd(e) {
+            e.preventDefault();
+            if (!game.running) return;
+            
+            const touch = e.changedTouches[0];
+            const deltaX = touch.clientX - game.touchStartX;
+            const deltaY = touch.clientY - game.touchStartY;
+            
+            handleInput(deltaX, deltaY);
+        }
+        
+        function handleTouchMove(e) {
+            e.preventDefault();
+        }
+        
+        let mouseDown = false;
+        let mouseStartX = 0;
+        let mouseStartY = 0;
+        
+        function handleMouseDown(e) {
+            if (!game.running) return;
+            mouseDown = true;
+            mouseStartX = e.clientX;
+            mouseStartY = e.clientY;
+        }
+        
+        function handleMouseUp(e) {
+            if (!game.running || !mouseDown) return;
+            mouseDown = false;
+            const deltaX = e.clientX - mouseStartX;
+            const deltaY = e.clientY - mouseStartY;
+            handleInput(deltaX, deltaY);
+        }
+        
+        function handleKeyDown(e) {
+            if (!game.running) return;
+            
+            switch(e.key) {
+                case 'ArrowUp':
+                case 'w':
+                case 'W':
+                case ' ':
+                    jump();
+                    break;
+                case 'ArrowDown':
+                case 's':
+                case 'S':
+                    slide();
+                    break;
+                case 'ArrowLeft':
+                case 'a':
+                case 'A':
+                    moveLeft();
+                    break;
+                case 'ArrowRight':
+                case 'd':
+                case 'D':
+                    moveRight();
+                    break;
+                case 'j':
+                case 'J':
+                    useSkill();
+                    break;
+            }
+        }
+        
+        function handleInput(deltaX, deltaY) {
+            const threshold = 30;
+            
+            if (game.branchActive) {
+                // 分叉选择模式
+                if (deltaX < -threshold) {
+                    selectBranch('left');
+                } else if (deltaX > threshold) {
+                    selectBranch('right');
+                }
+                return;
+            }
+            
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                // 水平滑动 - 切换跑道
+                if (deltaX < -threshold) {
+                    moveLeft();
+                } else if (deltaX > threshold) {
+                    moveRight();
+                }
+            } else {
+                // 垂直滑动
+                if (deltaY < -threshold) {
+                    jump();
+                } else if (deltaY > threshold) {
+                    slide();
+                }
+            }
+        }
+        
+        function moveLeft() {
+            if (game.player.targetLane > 0) {
+                game.player.targetLane--;
+                game.player.laneSwitchStart = Date.now();
+                if (!game.tutorialShown.lane) {
+                    game.tutorialShown.lane = true;
+                }
+            }
+        }
+        
+        function moveRight() {
+            if (game.player.targetLane < 2) {
+                game.player.targetLane++;
+                game.player.laneSwitchStart = Date.now();
+                if (!game.tutorialShown.lane) {
+                    game.tutorialShown.lane = true;
+                }
+            }
+        }
+        
+        function jump() {
+            if (!game.player.jumping && !game.player.sliding) {
+                game.player.jumping = true;
+                game.player.jumpStart = Date.now();
+                setTimeout(() => {
+                    game.player.jumping = false;
+                }, JUMP_DURATION);
+                if (!game.tutorialShown.jump) {
+                    game.tutorialShown.jump = true;
+                }
+            }
+        }
+        
+        function slide() {
+            if (!game.player.jumping && !game.player.sliding) {
+                game.player.sliding = true;
+                game.player.slideStart = Date.now();
+                setTimeout(() => {
+                    game.player.sliding = false;
+                }, SLIDE_DURATION);
+                if (!game.tutorialShown.slide) {
+                    game.tutorialShown.slide = true;
+                }
+            }
+        }
+        
+        function useSkill() {
+            if (!game.skillReady || game.skillActive) return;
+            
+            game.skillActive = true;
+            game.skillReady = false;
+            game.skillUses++;
+            game.player.invincible = true;
+            
+            const skillDuration = 3000;
+            
+            // 赵云特效
+            if (game.character === 'zhaoyun') {
+                // 龙胆冲刺特效在渲染中处理
+            }
+            
+            setTimeout(() => {
+                game.skillActive = false;
+                game.player.invincible = false;
+            }, skillDuration);
+            
+            // 冷却
+            game.skillCooldownStart = Date.now();
+            updateSkillUI();
+            
+            setTimeout(() => {
+                game.skillReady = true;
+                updateSkillUI();
+            }, game.charData.cooldown);
+            
+            if (!game.tutorialShown.skill) {
+                game.tutorialShown.skill = true;
+            }
+        }
+        
+        function updateSkillUI() {
+            const btn = document.getElementById('skillBtn');
+            const cooldown = document.getElementById('skillCooldown');
+            
+            if (game.skillReady) {
+                btn.classList.remove('on-cooldown');
+                cooldown.style.height = '0%';
+            } else {
+                btn.classList.add('on-cooldown');
+                const elapsed = Date.now() - game.skillCooldownStart;
+                const progress = Math.min(elapsed / game.charData.cooldown, 1);
+                cooldown.style.height = `${(1 - progress) * 100}%`;
+            }
+        }
+        
+        // ==================== 道路生成 ====================
+        function addRoadSegment() {
+            let turn = 0;
+            
+            if (game.roadSegments.length < 3) {
+                turn = 0; // 开头直道
+            } else if (game.score < CHAPTER1_CONFIG.phase1End) {
+                // 上半部分 - 平缓弯道
+                const rand = Math.random();
+                if (rand < 0.15) turn = -12;
+                else if (rand < 0.3) turn = 12;
+                else if (rand < 0.4) turn = -6;
+                else if (rand < 0.5) turn = 6;
+            } else {
+                // 下半部分 - 更复杂的屋顶逃亡
+                const rand = Math.random();
+                if (rand < 0.2) turn = -15;
+                else if (rand < 0.4) turn = 15;
+                else if (rand < 0.55) turn = -8;
+                else if (rand < 0.7) turn = 8;
+                else if (rand < 0.75) turn = -20;
+                else if (rand < 0.8) turn = 20;
+            }
+            
+            const lastSeg = game.roadSegments[game.roadSegments.length - 1];
+            const angle = lastSeg ? lastSeg.angle + turn : 0;
+            
+            game.roadSegments.push({
+                angle: angle,
+                turn: turn,
+                z: game.roadSegments.length * ROAD_SEGMENT_LENGTH
+            });
+        }
+        
+        // ==================== 游戏逻辑 ====================
+        let lastTime = 0;
+        function gameLoop(timestamp) {
+            if (!game.running) return;
+            
+            update();
+            render();
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        function update() {
+            // 移动玩家
+            const speedMult = game.charData.stats.speed;
+            game.player.z += 5 * speedMult;
+            game.score = Math.floor(game.player.z / 10);
+            
+            // 检查阶段切换
+            if (game.score >= CHAPTER1_CONFIG.bossStart && !game.bossActive && !game.branchActive) {
+                startBossFight();
+                return;
+            }
+            
+            // 检查分叉选择
+            checkBranchPoints();
+            
+            // 检查剧情对话
+            checkDialogPoints();
+            
+            // 更新相机
+            const currentSeg = getSegmentAtZ(game.player.z);
+            if (currentSeg) {
+                const targetAngle = currentSeg.angle * 0.3;
+                game.cameraOffset.angle += (targetAngle - game.cameraOffset.angle) * 0.05;
+            }
+            
+            // 平滑切换跑道
+            const laneSwitchProgress = Math.min((Date.now() - game.player.laneSwitchStart) / LANE_SWITCH_DURATION, 1);
+            game.player.lane = game.player.lane + (game.player.targetLane - game.player.lane) * 0.15;
+            
+            // 更新道路
+            while (game.roadSegments.length > 0 && game.roadSegments[0].z < game.player.z - 500) {
+                game.roadSegments.shift();
+                addRoadSegment();
+            }
+            
+            // 生成障碍物
+            const obstacleRate = game.score < CHAPTER1_CONFIG.phase1End ? 0.015 : 0.025;
+            if (Math.random() < obstacleRate) {
+                spawnObstacle();
+            }
+            
+            // 生成金币
+            if (Math.random() < 0.04) {
+                spawnCoin();
+            }
+            
+            // 生成装饰
+            if (Math.random() < 0.06) {
+                spawnDecoration();
+            }
+            
+            // 更新障碍物
+            game.obstacles = game.obstacles.filter(obs => {
+                obs.z -= 5 * speedMult;
+                
+                if (obs.z < game.player.z + 50 && obs.z > game.player.z - 30) {
+                    const laneDiff = Math.abs(obs.lane - game.player.lane);
+                    if (laneDiff < 0.7) {
+                        if (game.player.invincible) {
+                            // 无敌状态，跳过
+                        } else if (obs.jumpable && game.player.jumping) {
+                            // 跳过
+                        } else if (obs.slideable && game.player.sliding) {
+                            // 滑过
+                        } else {
+                            takeDamage();
+                            return false;
+                        }
+                    }
+                }
+                
+                return obs.z > game.player.z - 100;
+            });
+            
+            // 更新金币
+            game.coinItems = game.coinItems.filter(coin => {
+                coin.z -= 5 * speedMult;
+                
+                if (coin.z < game.player.z + 50 && coin.z > game.player.z - 30) {
+                    const laneDiff = Math.abs(coin.lane - game.player.lane);
+                    if (laneDiff < 0.7) {
+                        game.coins += 5;
+                        updateHUD();
+                        return false;
+                    }
+                }
+                
+                return coin.z > game.player.z - 100;
+            });
+            
+            // 更新装饰
+            game.decorations = game.decorations.filter(dec => {
+                dec.z -= 5 * speedMult;
+                return dec.z > game.player.z - 200;
+            });
+            
+            // 更新技能冷却UI
+            if (!game.skillReady) {
+                updateSkillUI();
+            }
+            
+            updateHUD();
+        }
+        
+        function takeDamage() {
+            game.playerHp--;
+            updatePlayerHealthUI();
+            
+            // 短暂无敌
+            game.player.invincible = true;
+            setTimeout(() => {
+                if (!game.skillActive) {
+                    game.player.invincible = false;
+                }
+            }, 1000);
+            
+            if (game.playerHp <= 0) {
+                gameOver(false);
+            }
+        }
+        
+        function updatePlayerHealthUI() {
+            const fill = document.getElementById('playerHealthFill');
+            if (fill) {
+                fill.style.width = `${(game.playerHp / game.playerMaxHp) * 100}%`;
+            }
+        }
+        
+        function getSegmentAtZ(z) {
+            for (let i = game.roadSegments.length - 1; i >= 0; i--) {
+                const seg = game.roadSegments[i];
+                if (z >= seg.z - ROAD_SEGMENT_LENGTH && z < seg.z) {
+                    return seg;
+                }
+            }
+            return game.roadSegments[0];
+        }
+        
+        function spawnObstacle() {
+            const type = OBSTACLE_TYPES[Math.floor(Math.random() * OBSTACLE_TYPES.length)];
+            game.obstacles.push({
+                z: game.player.z + 800 + Math.random() * 400,
+                lane: Math.floor(Math.random() * LANE_COUNT),
+                ...type
+            });
+        }
+        
+        function spawnCoin() {
+            game.coinItems.push({
+                z: game.player.z + 600 + Math.random() * 400,
+                lane: Math.floor(Math.random() * LANE_COUNT)
+            });
+        }
+        
+        function spawnDecoration() {
+            const side = Math.random() > 0.5 ? 'left' : 'right';
+            const emojis = ['🏛️', '🌳', '🏺', '⚔️', '🔥'];
+            game.decorations.push({
+                z: game.player.z + 400 + Math.random() * 400,
+                side: side,
+                emoji: emojis[Math.floor(Math.random() * emojis.length)],
+                offsetX: (Math.random() - 0.5) * 100
+            });
+        }
+        
+        // ==================== 分叉选择 ====================
+        function checkBranchPoints() {
+            if (game.branchActive) return;
+            
+            for (const branch of CHAPTER1_CONFIG.branchPoints) {
+                if (!branch.triggered && Math.abs(game.score - branch.distance) < 50) {
+                    branch.triggered = true;
+                    showBranchPrompt(branch);
+                    break;
+                }
+            }
+        }
+        
+        function showBranchPrompt(branch) {
+            game.branchActive = true;
+            game.nearestBranch = branch;
+            game.dialogActive = false;
+            
+            document.getElementById('branchText').textContent = `⚔️ ${branch.text} ⚔️`;
+            document.getElementById('branchHint').textContent = branch.hint;
+            document.getElementById('branch-prompt').style.display = 'block';
+        }
+        
+        function selectBranch(direction) {
+            if (!game.branchActive) return;
+            
+            game.branchActive = false;
+            document.getElementById('branch-prompt').style.display = 'none';
+            
+            const branch = game.nearestBranch;
+            game.branchResult = direction;
+            game.choices.push(`${direction === 'left' ? '左侧' : '右侧'}道路`);
+            
+            // 影响游戏难度
+            if (direction === 'left') {
+                // 左侧更安全
+                game.obstacles = game.obstacles.filter(obs => obs.z > game.player.z + 500);
+            } else {
+                // 右侧更快但更难
+                game.speed = Math.min(game.speed + 1, 10);
+            }
+        }
+        
+        // ==================== 剧情对话 ====================
+        function checkDialogPoints() {
+            if (game.dialogActive || game.branchActive) return;
+            
+            for (const dialog of CHAPTER1_CONFIG.dialogPoints) {
+                if (!dialog.triggered && Math.abs(game.score - dialog.distance) < 30) {
+                    dialog.triggered = true;
+                    showDialog(dialog);
+                    break;
+                }
+            }
+        }
+        
+        function showDialog(dialog) {
+            game.dialogActive = true;
+            game.currentDialog = dialog;
+            game.running = false;
+            
+            document.getElementById('dialogSpeaker').textContent = dialog.speaker;
+            document.getElementById('dialogText').textContent = dialog.text;
+            
+            const choicesDiv = document.getElementById('dialogChoices');
+            choicesDiv.innerHTML = '';
+            
+            if (dialog.choices) {
+                dialog.choices.forEach((choice, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'choice-btn';
+                    btn.textContent = choice.text;
+                    btn.addEventListener('click', () => selectDialogChoice(choice));
+                    choicesDiv.appendChild(btn);
+                });
+            } else if (dialog.auto) {
+                // 自动继续
+                setTimeout(() => {
+                    hideDialog();
+                }, dialog.duration || 3000);
+            } else {
+                // 无选项，继续按钮
+                const btn = document.createElement('button');
+                btn.className = 'choice-btn';
+                btn.textContent = '继续';
+                btn.addEventListener('click', hideDialog);
+                choicesDiv.appendChild(btn);
+            }
+            
+            document.getElementById('dialog-box').style.display = 'block';
+        }
+        
+        function selectDialogChoice(choice) {
+            game.choices.push(choice.result === 'protect' ? '保护貂蝉' : '让貂蝉躲藏');
+            hideDialog();
+        }
+        
+        function hideDialog() {
+            document.getElementById('dialog-box').style.display = 'none';
+            game.dialogActive = false;
+            game.running = true;
+            game.currentDialog = null;
+        }
+        
+        // ==================== BOSS战 ====================
+        function startBossFight() {
+            game.bossActive = true;
+            game.boss.hp = 100;
+            game.qteCorrect = 0;
+            game.qteTotal = 5;
+            
+            document.getElementById('boss-ui').style.display = 'block';
+            document.getElementById('bossHealthFill').style.width = '100%';
+            updatePlayerHealthUI();
+            
+            // 开始QTE序列
+            nextQTE();
+            
+            // 吕布攻击计时
+            game.boss.attackInterval = setInterval(() => {
+                if (!game.bossActive) return;
+                // 随机扣血
+                if (Math.random() < 0.3) {
+                    takeDamage();
+                }
+            }, 2000);
+        }
+        
+        function nextQTE() {
+            if (game.qteCorrect >= game.qteTotal) {
+                bossDefeated();
+                return;
+            }
+            
+            const keys = ['←', '→', '↑', '↓'];
+            const qteKey = keys[Math.floor(Math.random() * keys.length)];
+            game.boss.currentKey = qteKey;
+            
+            document.getElementById('qteKey').textContent = qteKey;
+            
+            // 设置超时
+            game.boss.qteTimeout = setTimeout(() => {
+                if (game.bossActive) {
+                    // QTE失败，扣血
+                    takeDamage();
+                    nextQTE();
+                }
+            }, 1500);
+        }
+        
+        function handleQTEInput(key) {
+            if (!game.bossActive) return;
+            
+            const expected = game.boss.currentKey;
+            let input = '';
+            
+            switch(key) {
+                case 'ArrowLeft': input = '←'; break;
+                case 'ArrowRight': input = '→'; break;
+                case 'ArrowUp': input = '↑'; break;
+                case 'ArrowDown': input = '↓'; break;
+            }
+            
+            if (input === expected) {
+                clearTimeout(game.boss.qteTimeout);
+                game.qteCorrect++;
+                game.boss.hp -= 20;
+                document.getElementById('bossHealthFill').style.width = `${game.boss.hp}%`;
+                
+                // 视觉反馈
+                document.getElementById('boss-ui').style.background = 'rgba(255,255,0,0.2)';
+                setTimeout(() => {
+                    document.getElementById('boss-ui').style.background = 'transparent';
+                }, 200);
+                
+                nextQTE();
+            }
+        }
+        
+        function bossDefeated() {
+            clearInterval(game.boss.attackInterval);
+            clearTimeout(game.boss.qteTimeout);
+            
+            game.bossActive = false;
+            document.getElementById('boss-ui').style.display = 'none';
+            
+            // 显示结局对话
+            setTimeout(() => {
+                showEndingDialog();
+            }, 500);
+        }
+        
+        function showEndingDialog() {
+            game.dialogActive = true;
+            
+            document.getElementById('dialogSpeaker').textContent = '吕布';
+            document.getElementById('dialogText').textContent = '可恶...竟被你这等小辈打败！今日暂且饶你，他日必报此仇！';
+            
+            const choicesDiv = document.getElementById('dialogChoices');
+            choicesDiv.innerHTML = '';
+            
+            const btn = document.createElement('button');
+            btn.className = 'choice-btn';
+            btn.textContent = '（成功逃离洛阳皇宫）';
+            btn.addEventListener('click', () => {
+                hideDialog();
+                showChapterComplete();
+            });
+            choicesDiv.appendChild(btn);
+            
+            document.getElementById('dialog-box').style.display = 'block';
+        }
+        
+        // 监听BOSS战按键
+        document.addEventListener('keydown', (e) => {
+            if (game.bossActive && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+                e.preventDefault();
+                handleQTEInput(e.key);
+            }
+        });
+        
+        // ==================== HUD更新 ====================
+        function updateHUD() {
+            document.getElementById('scoreHud').textContent = `🏃 ${game.score}米`;
+            document.getElementById('coinHud').textContent = `🪙 ${game.coins}`;
+        }
+        
+        // ==================== 渲染 ====================
+        function render() {
+            const ctx = game.ctx;
+            const w = game.width;
+            const h = game.height;
+            
+            // 绘制背景
+            drawBackground(ctx, w, h);
+            
+            // 绘制道路
+            drawRoad(ctx, w, h);
+            
+            // 绘制装饰
+            drawDecorations(ctx, w, h);
+            
+            // 绘制金币
+            drawCoins(ctx, w, h);
+            
+            // 绘制障碍物
+            drawObstacles(ctx, w, h);
+            
+            // 绘制玩家
+            drawPlayer(ctx, w, h);
+            
+            // 绘制分叉提示
+            if (game.branchActive) {
+                drawBranchOverlay(ctx, w, h);
+            }
+            
+            // 教学提示
+            drawTutorial(ctx, w, h);
+        }
+        
+        function drawBackground(ctx, w, h) {
+            // 选择背景
+            let bg;
+            if (game.score >= CHAPTER1_CONFIG.bossStart) {
+                bg = game.bossBg;
+            } else if (game.score >= CHAPTER1_CONFIG.phase1End) {
+                bg = game.roofBg;
+            } else {
+                bg = game.palaceBg;
+            }
+            
+            if (bg && bg.complete) {
+                ctx.drawImage(bg, 0, 0, w, h);
+            } else {
+                // 备用背景
+                const gradient = ctx.createLinearGradient(0, 0, 0, h);
+                gradient.addColorStop(0, '#1a0505');
+                gradient.addColorStop(0.5, '#3d1a1a');
+                gradient.addColorStop(1, '#1a0505');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, w, h);
+            }
+            
+            // 添加暗角
+            const vignette = ctx.createRadialGradient(w/2, h/2, 0, w/2, h/2, w * 0.7);
+            vignette.addColorStop(0, 'rgba(0,0,0,0)');
+            vignette.addColorStop(1, 'rgba(0,0,0,0.5)');
+            ctx.fillStyle = vignette;
+            ctx.fillRect(0, 0, w, h);
+        }
+        
+        function drawRoad(ctx, w, h) {
+            const horizon = h * 0.38;
+            const playerScreenY = h * 0.78;
+            
+            const roadPoints = [];
+            
+            for (let i = 0; i < game.roadSegments.length; i++) {
+                const seg = game.roadSegments[i];
+                const relZ = game.player.z - seg.z;
+                
+                if (relZ > -ROAD_SEGMENT_LENGTH * 2 && relZ < 1500) {
+                    const scale = 300 / (300 + relZ);
+                    const screenY = horizon + (playerScreenY - horizon) * scale;
+                    
+                    const angleOffset = seg.angle * 0.8 * (relZ / 300);
+                    const roadWidth = ROAD_WIDTH * scale;
+                    const centerX = w/2 + angleOffset;
+                    
+                    roadPoints.push({
+                        y: screenY,
+                        leftX: centerX - roadWidth/2,
+                        rightX: centerX + roadWidth/2,
+                        scale: scale,
+                        z: seg.z
+                    });
+                }
+            }
+            
+            roadPoints.sort((a, b) => b.z - a.z);
+            
+            // 绘制道路
+            for (let i = 0; i < roadPoints.length - 1; i++) {
+                const p1 = roadPoints[i];
+                const p2 = roadPoints[i + 1];
+                
+                // 道路颜色根据阶段变化
+                let roadColor1, roadColor2;
+                if (game.score >= CHAPTER1_CONFIG.phase1End) {
+                    // 屋顶 - 深色瓦片
+                    roadColor1 = 'rgba(60,40,60,0.9)';
+                    roadColor2 = 'rgba(40,25,40,0.95)';
+                } else {
+                    // 皇宫地板 - 红木
+                    roadColor1 = 'rgba(139,69,19,0.9)';
+                    roadColor2 = 'rgba(101,50,14,0.95)';
+                }
+                
+                const gradient = ctx.createLinearGradient(0, p1.y, 0, p2.y);
+                gradient.addColorStop(0, roadColor1);
+                gradient.addColorStop(1, roadColor2);
+                
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.moveTo(p1.leftX, p1.y);
+                ctx.lineTo(p1.rightX, p1.y);
+                ctx.lineTo(p2.rightX, p2.y);
+                ctx.lineTo(p2.leftX, p2.y);
+                ctx.closePath();
+                ctx.fill();
+                
+                // 道路边线
+                ctx.strokeStyle = 'rgba(255,215,0,0.4)';
+                ctx.lineWidth = 2 * p1.scale;
+                ctx.beginPath();
+                ctx.moveTo(p1.leftX, p1.y);
+                ctx.lineTo(p2.leftX, p2.y);
+                ctx.moveTo(p1.rightX, p1.y);
+                ctx.lineTo(p2.rightX, p2.y);
+                ctx.stroke();
+                
+                // 跑道分割线
+                if (i % 3 === 0) {
+                    const laneWidth = (p1.rightX - p1.leftX) / 3;
+                    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+                    ctx.lineWidth = 1 * p1.scale;
+                    for (let l = 1; l < 3; l++) {
+                        const x1 = p1.leftX + laneWidth * l;
+                        const x2 = p2.leftX + (p2.rightX - p2.leftX) / 3 * l;
+                        ctx.beginPath();
+                        ctx.moveTo(x1, p1.y);
+                        ctx.lineTo(x2, p2.y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+        
+        function drawDecorations(ctx, w, h) {
+            const horizon = h * 0.38;
+            const playerScreenY = h * 0.78;
+            
+            game.decorations.forEach(dec => {
+                const relZ = game.player.z - dec.z;
+                if (relZ < 0 || relZ > 800) return;
+                
+                const scale = 200 / (200 + relZ);
+                const screenY = horizon + (playerScreenY - horizon) * scale;
+                
+                const currentSeg = getSegmentAtZ(dec.z);
+                const segAngle = currentSeg ? currentSeg.angle : 0;
+                const angleOffset = segAngle * 0.8 * (relZ / 300);
+                const centerX = w/2 + angleOffset;
+                
+                let screenX;
+                if (dec.side === 'left') {
+                    screenX = centerX - ROAD_WIDTH * scale * 0.7;
+                } else {
+                    screenX = centerX + ROAD_WIDTH * scale * 0.7;
+                }
+                
+                if (screenY > horizon && screenY < h && scale > 0.1) {
+                    ctx.font = `${50 * scale}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.globalAlpha = Math.min(0.7, scale * 1.5);
+                    ctx.fillText(dec.emoji, screenX, screenY);
+                    ctx.globalAlpha = 1;
+                }
+            });
+        }
+        
+        function drawCoins(ctx, w, h) {
+            const horizon = h * 0.38;
+            const playerScreenY = h * 0.78;
+            
+            game.coinItems.forEach(coin => {
+                const relZ = game.player.z - coin.z;
+                if (relZ < 0 || relZ > 800) return;
+                
+                const scale = 150 / (150 + relZ);
+                const screenY = horizon + (playerScreenY - horizon) * scale - 30 * scale;
+                
+                const currentSeg = getSegmentAtZ(coin.z);
+                const segAngle = currentSeg ? currentSeg.angle : 0;
+                const angleOffset = segAngle * 0.8 * (relZ / 300);
+                const centerX = w/2 + angleOffset;
+                const laneOffset = (coin.lane - 1) * 50 * scale;
+                const screenX = centerX + laneOffset;
+                
+                if (screenY > horizon) {
+                    // 金币动画
+                    const bob = Math.sin(Date.now() * 0.01 + coin.z) * 5 * scale;
+                    
+                    // 光晕
+                    const glowGrad = ctx.createRadialGradient(screenX, screenY + bob, 0, screenX, screenY + bob, 30 * scale);
+                    glowGrad.addColorStop(0, 'rgba(255,215,0,0.4)');
+                    glowGrad.addColorStop(1, 'rgba(255,215,0,0)');
+                    ctx.fillStyle = glowGrad;
+                    ctx.beginPath();
+                    ctx.arc(screenX, screenY + bob, 30 * scale, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // 金币
+                    ctx.font = `${35 * scale}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('🪙', screenX, screenY + bob);
+                }
+            });
+        }
+        
+        function drawObstacles(ctx, w, h) {
+            const horizon = h * 0.38;
+            const playerScreenY = h * 0.78;
+            
+            const sorted = [...game.obstacles].sort((a, b) => b.z - a.z);
+            
+            sorted.forEach(obs => {
+                const relZ = game.player.z - obs.z;
+                if (relZ < 0 || relZ > 800) return;
+                
+                const scale = 150 / (150 + relZ);
+                const screenY = horizon + (playerScreenY - horizon) * scale;
+                
+                const currentSeg = getSegmentAtZ(obs.z);
+                const segAngle = currentSeg ? currentSeg.angle : 0;
+                const angleOffset = segAngle * 0.8 * (relZ / 300);
+                const centerX = w/2 + angleOffset;
+                const laneOffset = (obs.lane - 1) * 50 * scale;
+                const screenX = centerX + laneOffset;
+                
+                if (screenY > horizon) {
+                    ctx.font = `${60 * scale}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(obs.emoji, screenX, screenY);
+                }
+            });
+        }
+        
+        function drawPlayer(ctx, w, h) {
+            // 计算当前车道位置
+            const laneOffset = (game.player.lane - 1) * 50;
+            const playerScreenX = w * 0.5 + laneOffset;
+            const playerScreenY = h * 0.75;
+            
+            ctx.save();
+            ctx.translate(playerScreenX, playerScreenY);
+            
+            // 跳跃效果
+            let jumpOffset = 0;
+            if (game.player.jumping) {
+                const elapsed = Date.now() - game.player.jumpStart;
+                const progress = elapsed / JUMP_DURATION;
+                jumpOffset = -Math.sin(progress * Math.PI) * 60;
+            }
+            
+            // 滑铲效果
+            let scaleX = 1, scaleY = 1;
+            if (game.player.sliding) {
+                scaleX = 1.3;
+                scaleY = 0.5;
+            }
+            
+            ctx.scale(scaleX, scaleY);
+            
+            // 无敌闪烁
+            if (game.player.invincible && !game.skillActive) {
+                ctx.globalAlpha = 0.5 + Math.sin(Date.now() * 0.02) * 0.5;
+            }
+            
+            // 技能特效
+            if (game.skillActive) {
+                // 赵云 - 银色龙形气流
+                if (game.character === 'zhaoyun') {
+                    const glowGrad = ctx.createRadialGradient(0, -50, 0, 0, -50, 80);
+                    glowGrad.addColorStop(0, 'rgba(135,206,250,0.6)');
+                    glowGrad.addColorStop(1, 'rgba(135,206,250,0)');
+                    ctx.fillStyle = glowGrad;
+                    ctx.beginPath();
+                    ctx.arc(0, -50, 80, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // 龙形拖尾
+                    ctx.font = '40px Arial';
+                    ctx.fillText('⚡', -30, -40);
+                    ctx.fillText('⚡', 0, -55);
+                    ctx.fillText('⚡', 30, -40);
+                }
+                // 张飞 - 黑色冲击波
+                else if (game.character === 'zhangfei') {
+                    ctx.strokeStyle = 'rgba(100,100,100,0.8)';
+                    ctx.lineWidth = 8;
+                    for (let i = 0; i < 3; i++) {
+                        const offset = (Date.now() * 0.05 + i * 20) % 60;
+                        ctx.beginPath();
+                        ctx.arc(0, -50, 30 + offset, -Math.PI/2, Math.PI/2);
+                        ctx.stroke();
+                    }
+                }
+                // 貂蝉 - 粉色花瓣
+                else if (game.character === 'diaochan') {
+                    ctx.fillStyle = 'rgba(255,182,193,0.6)';
+                    for (let i = 0; i < 8; i++) {
+                        const angle = (Date.now() * 0.003 + i * Math.PI / 4) % (Math.PI * 2);
+                        const dist = 40 + Math.sin(Date.now() * 0.01 + i) * 20;
+                        const x = Math.cos(angle) * dist;
+                        const y = -50 + Math.sin(angle) * dist;
+                        ctx.beginPath();
+                        ctx.arc(x, y, 8, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            }
+            
+            // 阴影
+            ctx.globalAlpha = ctx.globalAlpha * 0.4;
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.ellipse(0, 20 - jumpOffset, 35, 15, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = game.player.invincible && !game.skillActive ? 0.5 + Math.sin(Date.now() * 0.02) * 0.5 : 1;
+            
+            // 角色绘制
+            const charColor = game.charData.color;
+            const charIcon = game.character === 'zhaoyun' ? '💫' : 
+                            game.character === 'zhangfei' ? '🔥' : '🌸';
+            
+            // 角色光晕
+            const charGlow = ctx.createRadialGradient(0, -50 - jumpOffset, 0, 0, -50 - jumpOffset, 60);
+            charGlow.addColorStop(0, charColor + '80');
+            charGlow.addColorStop(1, charColor + '00');
+            ctx.fillStyle = charGlow;
+            ctx.beginPath();
+            ctx.arc(0, -50 - jumpOffset, 60, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 角色本体
+            ctx.font = '70px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(charIcon, 0, -50 - jumpOffset);
+            
+            // 跑步特效
+            ctx.font = '18px Arial';
+            const bob = Math.sin(Date.now() * 0.015) * 4;
+            ctx.fillStyle = 'rgba(255,255,255,0.7)';
+            ctx.fillText('💨', -25, 5 + bob);
+            ctx.fillText('💨', 25, 10 - bob);
+            
+            ctx.restore();
+        }
+        
+        function drawBranchOverlay(ctx, w, h) {
+            // 半透明覆盖
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.fillRect(0, 0, w, h);
+            
+            // 分叉指示
+            const centerX = w / 2;
+            const centerY = h / 2;
+            
+            // 左侧箭头
+            ctx.save();
+            ctx.translate(centerX - 100, centerY);
+            ctx.fillStyle = 'rgba(100,200,100,0.8)';
+            ctx.beginPath();
+            ctx.moveTo(-30, -20);
+            ctx.lineTo(0, 0);
+            ctx.lineTo(-30, 20);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+            
+            // 右侧箭头
+            ctx.save();
+            ctx.translate(centerX + 100, centerY);
+            ctx.fillStyle = 'rgba(200,100,100,0.8)';
+            ctx.beginPath();
+            ctx.moveTo(30, -20);
+            ctx.lineTo(0, 0);
+            ctx.lineTo(30, 20);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+        }
+        
+        function drawTutorial(ctx, w, h) {
+            if (game.score > 100) return; // 100米后不显示教学
+            
+            const tutorials = [];
+            if (!game.tutorialShown.jump) {
+                tutorials.push({ text: '⬆️ 上滑跳跃', y: h * 0.6 });
+            }
+            if (!game.tutorialShown.slide) {
+                tutorials.push({ text: '⬇️ 下滑滑铲', y: h * 0.65 });
+            }
+            if (!game.tutorialShown.lane) {
+                tutorials.push({ text: '⬅️➡️ 左右滑动切换跑道', y: h * 0.7 });
+            }
+            
+            tutorials.forEach((t, i) => {
+                ctx.font = '18px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = 'rgba(255,215,0,0.9)';
+                ctx.fillText(t.text, w / 2, t.y);
+            });
+        }
+        
+        // ==================== 启动 ====================
+        init();
+    </script>
+</body>
+</html>
